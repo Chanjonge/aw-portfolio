@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
-// GET all submissions (Admin or Member)
+// GET all submissions (Admin only)
 export async function GET(request: NextRequest) {
     try {
         const token = request.headers.get('authorization')?.replace('Bearer ', '');
@@ -14,54 +14,27 @@ export async function GET(request: NextRequest) {
 
         const decoded = verifyToken(token);
 
-        if (!decoded) {
-            return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+        if (!decoded || (decoded.role !== 'ADMIN' && decoded.role !== 'SUPER_ADMIN')) {
+            return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
         const portfolioId = searchParams.get('portfolioId');
 
-        let submissions;
-
-        // Admin can see all submissions
-        if (decoded.role === 'ADMIN' || decoded.role === 'SUPER_ADMIN') {
-            submissions = await prisma.formSubmission.findMany({
-                where: portfolioId ? { portfolioId } : undefined,
-                include: {
-                    portfolio: {
-                        select: {
-                            title: true,
-                            slug: true,
-                        },
+        const submissions = await prisma.formSubmission.findMany({
+            where: portfolioId ? { portfolioId } : undefined,
+            include: {
+                portfolio: {
+                    select: {
+                        title: true,
+                        slug: true,
                     },
                 },
-                orderBy: {
-                    completedAt: 'desc',
-                },
-            });
-        } 
-        // Member can only see their own submissions
-        else if (decoded.role === 'MEMBER') {
-            submissions = await prisma.formSubmission.findMany({
-                where: {
-                    submittedBy: decoded.userId,
-                    ...(portfolioId ? { portfolioId } : {}),
-                },
-                include: {
-                    portfolio: {
-                        select: {
-                            title: true,
-                            slug: true,
-                        },
-                    },
-                },
-                orderBy: {
-                    completedAt: 'desc',
-                },
-            });
-        } else {
-            return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
-        }
+            },
+            orderBy: {
+                updatedAt: 'desc',
+            },
+        });
 
         const parsedSubmissions = submissions.map((sub) => ({
             ...sub,
