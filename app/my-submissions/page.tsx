@@ -29,12 +29,12 @@ export default function MySubmissionsPage() {
 
     const handleSearch = async () => {
         setError('');
-        
+
         if (!companyName.trim()) {
             setError('상호명을 입력해주세요.');
             return;
         }
-        
+
         if (password.length !== 4 || !/^\d{4}$/.test(password)) {
             setError('4자리 숫자 비밀번호를 입력해주세요.');
             return;
@@ -52,7 +52,7 @@ export default function MySubmissionsPage() {
                 const data = await response.json();
                 setSubmissions(data.submissions || []);
                 setSearched(true);
-                
+
                 if (data.submissions.length === 0) {
                     setError('제출 내역이 없습니다.');
                 }
@@ -134,11 +134,7 @@ export default function MySubmissionsPage() {
                             </div>
                         )}
 
-                        <button
-                            onClick={handleSearch}
-                            disabled={loading}
-                            className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
+                        <button onClick={handleSearch} disabled={loading} className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
                             {loading ? '조회 중...' : '제출 내역 조회'}
                         </button>
                     </div>
@@ -159,37 +155,29 @@ export default function MySubmissionsPage() {
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <h3 className="text-lg font-bold text-black">
-                                                    {submission.portfolio.title}
-                                                </h3>
-                                                {submission.isDraft ? (
-                                                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                                                        임시저장
-                                                    </span>
-                                                ) : (
-                                                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                                                        제출완료
-                                                    </span>
-                                                )}
+                                                <h3 className="text-lg font-bold text-black">{submission.portfolio.title}</h3>
+                                                {submission.isDraft ? <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">임시저장</span> : <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">제출완료</span>}
                                             </div>
-                                            
+
                                             <div className="space-y-1 text-sm text-gray-600">
                                                 <p>
-                                                    {submission.isDraft ? '저장일' : '제출일'}: {new Date(submission.isDraft ? submission.updatedAt : submission.completedAt).toLocaleDateString('ko-KR', {
+                                                    {submission.isDraft ? '저장일' : '제출일'}:{' '}
+                                                    {new Date(submission.isDraft ? submission.updatedAt : submission.completedAt).toLocaleDateString('ko-KR', {
                                                         year: 'numeric',
                                                         month: 'long',
                                                         day: 'numeric',
                                                         hour: '2-digit',
-                                                        minute: '2-digit'
+                                                        minute: '2-digit',
                                                     })}
                                                 </p>
                                                 {submission.isDraft && submission.updatedAt !== submission.completedAt && (
                                                     <p className="text-yellow-600">
-                                                        💡 마지막 수정: {new Date(submission.updatedAt).toLocaleDateString('ko-KR', {
+                                                        💡 마지막 수정:{' '}
+                                                        {new Date(submission.updatedAt).toLocaleDateString('ko-KR', {
                                                             month: 'long',
                                                             day: 'numeric',
                                                             hour: '2-digit',
-                                                            minute: '2-digit'
+                                                            minute: '2-digit',
                                                         })}
                                                     </p>
                                                 )}
@@ -197,10 +185,7 @@ export default function MySubmissionsPage() {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleContinue(submission)}
-                                                className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all"
-                                            >
+                                            <button onClick={() => handleContinue(submission)} className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
                                                 {submission.isDraft ? '이어서 작성' : '수정하기'}
                                             </button>
                                         </div>
@@ -225,4 +210,3 @@ export default function MySubmissionsPage() {
         </div>
     );
 }
-

@@ -179,7 +179,7 @@ export default function SuperAdminPage() {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/submissions', {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             });
             const data = await response.json();
@@ -434,7 +434,13 @@ export default function SuperAdminPage() {
                         <button onClick={() => setActiveTab('users')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'users' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
                             사용자 관리
                         </button>
-                        <button onClick={() => { setActiveTab('submissions'); fetchSubmissions(); }} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
+                        <button
+                            onClick={() => {
+                                setActiveTab('submissions');
+                                fetchSubmissions();
+                            }}
+                            className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
+                        >
                             제출 목록
                         </button>
                     </div>
@@ -954,27 +960,13 @@ export default function SuperAdminPage() {
                                     <tbody className="divide-y divide-gray-200">
                                         {submissions.map((submission) => (
                                             <tr key={submission.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 text-sm font-semibold text-black">
-                                                    {submission.companyName}
-                                                </td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-black">{submission.companyName}</td>
                                                 <td className="px-6 py-4 text-sm font-mono text-gray-700">
-                                                    <span className="px-2 py-1 bg-gray-100 rounded">
-                                                        {submission.password.slice(0, 10)}...
-                                                    </span>
+                                                    <span className="px-2 py-1 bg-gray-100 rounded">{submission.password.slice(0, 10)}...</span>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">
-                                                    {submission.portfolio.title}
-                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{submission.portfolio.title}</td>
                                                 <td className="px-6 py-4 text-sm">
-                                                    {submission.isDraft ? (
-                                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                                                            임시저장
-                                                        </span>
-                                                    ) : (
-                                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                                                            제출완료
-                                                        </span>
-                                                    )}
+                                                    {submission.isDraft ? <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">임시저장</span> : <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">제출완료</span>}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-600">
                                                     {new Date(submission.isDraft ? submission.updatedAt : submission.completedAt).toLocaleDateString('ko-KR', {
@@ -1004,7 +996,7 @@ export default function SuperAdminPage() {
                                                                         const response = await fetch(`/api/submissions/${submission.id}`, {
                                                                             method: 'DELETE',
                                                                             headers: {
-                                                                                'Authorization': `Bearer ${token}`,
+                                                                                Authorization: `Bearer ${token}`,
                                                                             },
                                                                         });
 
@@ -1040,10 +1032,10 @@ export default function SuperAdminPage() {
                                         전체: <strong className="text-black">{submissions.length}</strong>건
                                     </span>
                                     <span>
-                                        제출완료: <strong className="text-green-600">{submissions.filter(s => !s.isDraft).length}</strong>건
+                                        제출완료: <strong className="text-green-600">{submissions.filter((s) => !s.isDraft).length}</strong>건
                                     </span>
                                     <span>
-                                        임시저장: <strong className="text-yellow-600">{submissions.filter(s => s.isDraft).length}</strong>건
+                                        임시저장: <strong className="text-yellow-600">{submissions.filter((s) => s.isDraft).length}</strong>건
                                     </span>
                                 </div>
                             </div>

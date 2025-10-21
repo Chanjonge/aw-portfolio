@@ -48,4 +48,3 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '조회 중 오류가 발생했습니다.' }, { status: 500 });
     }
 }
-
