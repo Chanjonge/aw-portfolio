@@ -37,10 +37,21 @@ export default function PortfolioForm() {
     const [errors, setErrors] = useState<FormData>({});
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [userRole, setUserRole] = useState<string>(''); // 'MEMBER' or other
 
     const maxStep = Math.max(...questions.map((q) => q.step), 5);
 
     useEffect(() => {
+        // Check user role
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const userData = JSON.parse(userStr);
+                setUserRole(userData.role || '');
+            } catch (error) {
+                console.error('Failed to parse user data:', error);
+            }
+        }
         fetchPortfolioAndQuestions();
     }, [slug]);
 
@@ -122,7 +133,12 @@ export default function PortfolioForm() {
 
             if (response.ok) {
                 alert('제출이 완료되었습니다.');
-                router.push('/thank-you');
+                // Redirect based on user role
+                if (userRole === 'MEMBER') {
+                    router.push('/member/submissions');
+                } else {
+                    router.push('/thank-you');
+                }
             } else {
                 const data = await response.json();
                 alert(data.error || '제출 중 오류가 발생했습니다.');
@@ -163,7 +179,16 @@ export default function PortfolioForm() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold mb-4">포트폴리오를 찾을 수 없습니다</h2>
-                    <button onClick={() => router.push('/')} className="px-4 py-2 bg-black text-white rounded-lg">
+                    <button
+                        onClick={() => {
+                            if (userRole === 'MEMBER') {
+                                router.push('/member/portfolios');
+                            } else {
+                                router.push('/');
+                            }
+                        }}
+                        className="px-4 py-2 bg-black text-white rounded-lg"
+                    >
                         홈으로 돌아가기
                     </button>
                 </div>
@@ -177,7 +202,16 @@ export default function PortfolioForm() {
                 <div className="text-center">
                     <h2 className="text-2xl font-bold mb-4">아직 설정된 질문이 없습니다</h2>
                     <p className="text-gray-600 mb-4">관리자에게 문의해주세요.</p>
-                    <button onClick={() => router.push('/')} className="px-4 py-2 bg-black text-white rounded-lg">
+                    <button
+                        onClick={() => {
+                            if (userRole === 'MEMBER') {
+                                router.push('/member/portfolios');
+                            } else {
+                                router.push('/');
+                            }
+                        }}
+                        className="px-4 py-2 bg-black text-white rounded-lg"
+                    >
                         홈으로 돌아가기
                     </button>
                 </div>
@@ -266,7 +300,17 @@ export default function PortfolioForm() {
 
                 {/* Back to Home */}
                 <div className="text-center mt-6">
-                    <button onClick={() => router.push('/')} className="text-gray-600 hover:text-black transition-all">
+                    <button
+                        onClick={() => {
+                            // Redirect based on user role
+                            if (userRole === 'MEMBER') {
+                                router.push('/member/portfolios');
+                            } else {
+                                router.push('/');
+                            }
+                        }}
+                        className="text-gray-600 hover:text-black transition-all"
+                    >
                         ← 포트폴리오 리스트로 돌아가기
                     </button>
                 </div>
