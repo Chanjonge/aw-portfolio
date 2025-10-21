@@ -1,0 +1,31 @@
+==============================================
+  .env 파일에 복사할 내용
+==============================================
+
+아래 내용을 프로젝트 루트의 .env 파일에 복사하세요:
+
+---복사 시작---
+
+DATABASE_URL="mongodb+srv://Vercel-Admin-atlas-pink-river:WoFuqpZBwPKxZrpV@atlas-pink-river.txzjjui.mongodb.net/?retryWrites=true&w=majority"
+JWT_SECRET="F8cjHwRaWUe1ffMk9ccaps1hwQ4rakuQARbA6lH1Mws="
+NEXTAUTH_SECRET="BKKUatsUYpdqMOSZPy1aGaVL6IpCGayA82UVglOlupk="
+NEXTAUTH_URL="http://localhost:3000"
+NODE_ENV="development"
+
+---복사 끝---
+
+==============================================
+  다음 단계
+==============================================
+
+1. .env 파일 저장 후 아래 명령어 실행:
+
+   npm run prisma:push
+   npm run seed
+   npm run dev
+
+2. 브라우저에서 테스트:
+   http://localhost:3000/admin/login
+
+==============================================
+
