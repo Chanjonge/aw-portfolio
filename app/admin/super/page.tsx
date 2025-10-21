@@ -889,10 +889,8 @@ export default function SuperAdminPage() {
                 </div>
             )}
 
-                {/* Members Tab */}
-                {activeTab === 'members' && (
-                    <MemberManagement token={localStorage.getItem('token') || ''} />
-                )}
+            {/* Members Tab */}
+            {activeTab === 'members' && <MemberManagement token={localStorage.getItem('token') || ''} />}
         </div>
     );
 }
