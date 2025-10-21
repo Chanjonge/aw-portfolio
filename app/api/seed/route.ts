@@ -4,19 +4,35 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
     try {
+        console.log('🔄 Seed API called');
+        
         // 보안을 위해 비밀 키 확인
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch (e) {
+            console.error('Failed to parse JSON:', e);
+            return NextResponse.json({ 
+                error: 'Invalid JSON' 
+            }, { status: 400 });
+        }
+        
         const { secretKey } = body;
+        console.log('🔑 Secret key received:', secretKey ? 'yes' : 'no');
         
         // SEED_SECRET_KEY 환경 변수가 없으면 기본값 사용 (개발용)
         const expectedKey = process.env.SEED_SECRET_KEY || 'default-seed-key-2025';
+        console.log('🔑 Expected key:', expectedKey);
         
         if (secretKey !== expectedKey) {
+            console.log('❌ Secret key mismatch');
             return NextResponse.json({ 
                 error: 'Unauthorized',
                 message: 'Invalid secret key' 
             }, { status: 401 });
         }
+
+        console.log('✅ Secret key valid, checking existing admin...');
 
         // 이미 관리자가 있는지 확인
         const existingAdmin = await prisma.user.findFirst({
@@ -24,12 +40,15 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingAdmin) {
+            console.log('⚠️ Super admin already exists');
             return NextResponse.json({ 
                 success: false,
                 message: 'Super admin already exists',
                 admin: { email: existingAdmin.email }
-            }, { status: 400 });
+            }, { status: 200 }); // 200으로 변경
         }
+
+        console.log('🔨 Creating super admin...');
 
         // Super Admin 생성
         const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -46,6 +65,7 @@ export async function POST(request: NextRequest) {
         console.log('✅ Super admin created:', admin.email);
 
         // 샘플 포트폴리오 생성
+        console.log('🔨 Creating portfolios...');
         const portfolios = await Promise.all([
             prisma.portfolio.create({
                 data: {
@@ -79,6 +99,7 @@ export async function POST(request: NextRequest) {
         console.log(`✅ Created ${portfolios.length} portfolios`);
 
         // 각 포트폴리오에 샘플 질문 생성
+        console.log('🔨 Creating questions...');
         const questions = [];
         for (const portfolio of portfolios) {
             const q1 = await prisma.question.create({
@@ -129,10 +150,12 @@ export async function POST(request: NextRequest) {
         });
     } catch (error: any) {
         console.error('❌ Seed error:', error);
+        console.error('Stack:', error.stack);
         return NextResponse.json({ 
             success: false,
             error: 'Seed failed', 
-            details: error.message 
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });
     }
 }
