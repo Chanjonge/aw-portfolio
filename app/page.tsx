@@ -88,9 +88,14 @@ export default function Home() {
                                     </button>
                                 </>
                             ) : (
-                                <Link href="/admin/login" className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
-                                    관리자 로그인
-                                </Link>
+                                <div className="flex items-center gap-3">
+                                    <Link href="/my-submissions" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
+                                        내 제출 내역
+                                    </Link>
+                                    <Link href="/admin/login" className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                                        관리자 로그인
+                                    </Link>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -101,12 +106,6 @@ export default function Home() {
                 <div className="text-center mb-12">
                     <h2 className="text-4xl font-bold text-black mb-4">타입형 리스트</h2>
                     {/* <p className="text-xl text-gray-600">원하시는 타입을 선택하여 양식을 작성해주세요</p> */}
-                    <div className="mt-6">
-                        <Link href="/my-submissions" className="inline-flex items-center gap-2 px-6 py-3 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
-                            📋 내 제출 내역 조회
-                        </Link>
-                        <p className="text-sm text-gray-500 mt-2">임시저장한 내용을 확인하거나 제출한 내용을 수정할 수 있습니다</p>
-                    </div>
                 </div>
 
                 {loading ? (
