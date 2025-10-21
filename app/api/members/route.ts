@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
                 username,
                 password: hashedPassword,
                 companyName,
-                createdBy: decoded.id,
+                createdBy: decoded.userId,
             },
             select: {
                 id: true,
