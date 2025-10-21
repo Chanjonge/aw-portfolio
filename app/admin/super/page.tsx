@@ -635,6 +635,12 @@ export default function SuperAdminPage() {
                                     onChange={async (e) => {
                                         const file = e.target.files?.[0];
                                         if (file) {
+                                            // 로딩 표시
+                                            const originalText = e.target.nextElementSibling?.textContent;
+                                            if (e.target.nextElementSibling) {
+                                                e.target.nextElementSibling.textContent = '업로드 중...';
+                                            }
+
                                             const formData = new FormData();
                                             formData.append('file', file);
                                             const token = localStorage.getItem('token');
@@ -646,15 +652,20 @@ export default function SuperAdminPage() {
                                                     },
                                                     body: formData,
                                                 });
-                                                if (response.ok) {
-                                                    const data = await response.json();
+                                                
+                                                const data = await response.json();
+                                                console.log('Upload response:', data);
+                                                
+                                                if (response.ok && data.url) {
                                                     setPortfolioForm({ ...portfolioForm, thumbnail: data.url });
+                                                    alert('✅ 이미지 업로드 성공!\n저장 버튼을 눌러주세요.');
                                                 } else {
-                                                    alert('이미지 업로드에 실패했습니다.');
+                                                    console.error('Upload failed:', data);
+                                                    alert(`❌ 이미지 업로드 실패: ${data.error || data.details || '알 수 없는 오류'}\n\n${data.details ? `상세: ${data.details}` : ''}`);
                                                 }
                                             } catch (error) {
                                                 console.error('Upload error:', error);
-                                                alert('이미지 업로드 중 오류가 발생했습니다.');
+                                                alert('❌ 이미지 업로드 중 오류가 발생했습니다.\n콘솔을 확인하세요.');
                                             }
                                         }
                                     }}
@@ -771,15 +782,20 @@ export default function SuperAdminPage() {
                                                     },
                                                     body: formData,
                                                 });
-                                                if (response.ok) {
-                                                    const data = await response.json();
+                                                
+                                                const data = await response.json();
+                                                console.log('Upload response:', data);
+                                                
+                                                if (response.ok && data.url) {
                                                     setQuestionForm({ ...questionForm, thumbnail: data.url });
+                                                    alert('✅ 이미지 업로드 성공!\n저장 버튼을 눌러주세요.');
                                                 } else {
-                                                    alert('이미지 업로드에 실패했습니다.');
+                                                    console.error('Upload failed:', data);
+                                                    alert(`❌ 이미지 업로드 실패: ${data.error || data.details || '알 수 없는 오류'}\n\n${data.details ? `상세: ${data.details}` : ''}`);
                                                 }
                                             } catch (error) {
                                                 console.error('Upload error:', error);
-                                                alert('이미지 업로드 중 오류가 발생했습니다.');
+                                                alert('❌ 이미지 업로드 중 오류가 발생했습니다.\n콘솔을 확인하세요.');
                                             }
                                         }
                                     }}
