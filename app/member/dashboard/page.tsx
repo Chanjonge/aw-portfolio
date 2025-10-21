@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface User {
     id: string;
@@ -68,12 +69,28 @@ export default function MemberDashboardPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
+            {/* Header with Navigation */}
             <header className="bg-white border-b-2 border-black">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        <div>
-                            <h1 className="text-2xl font-bold text-black">회원 대시보드</h1>
+                        <div className="flex items-center gap-8">
+                            <Link href="/member/dashboard" className="text-2xl font-bold text-black hover:text-gray-700">
+                                회원 페이지
+                            </Link>
+                            <nav className="flex gap-6">
+                                <Link href="/member/dashboard" className="text-black font-bold border-b-2 border-black">
+                                    대시보드
+                                </Link>
+                                <Link href="/member/portfolios" className="text-gray-600 hover:text-black font-medium transition-colors">
+                                    포트폴리오
+                                </Link>
+                                <Link href="/member/submissions" className="text-gray-600 hover:text-black font-medium transition-colors">
+                                    내 제출내역
+                                </Link>
+                                <Link href="/member/mypage" className="text-gray-600 hover:text-black font-medium transition-colors">
+                                    마이페이지
+                                </Link>
+                            </nav>
                         </div>
                         <button onClick={handleLogout} className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
                             로그아웃
@@ -123,17 +140,17 @@ export default function MemberDashboardPage() {
                     <h3 className="text-2xl font-bold text-black mb-6">회원 전용 기능</h3>
                     
                     <div className="space-y-4">
-                        <div className="p-6 border-2 border-gray-200 rounded-lg hover:border-black transition-all cursor-pointer">
+                        <Link href="/member/portfolios" className="block p-6 border-2 border-gray-200 rounded-lg hover:border-black hover:shadow-lg transition-all cursor-pointer">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h4 className="text-lg font-semibold text-black mb-2">포트폴리오 보기</h4>
-                                    <p className="text-gray-600 text-sm">등록된 포트폴리오를 확인하세요</p>
+                                    <p className="text-gray-600 text-sm">등록된 포트폴리오를 확인하고 신청하세요</p>
                                 </div>
                                 <span className="text-2xl">📁</span>
                             </div>
-                        </div>
+                        </Link>
 
-                        <div className="p-6 border-2 border-gray-200 rounded-lg hover:border-black transition-all cursor-pointer">
+                        <Link href="/member/submissions" className="block p-6 border-2 border-gray-200 rounded-lg hover:border-black hover:shadow-lg transition-all cursor-pointer">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h4 className="text-lg font-semibold text-black mb-2">내 제출 내역</h4>
@@ -141,17 +158,17 @@ export default function MemberDashboardPage() {
                                 </div>
                                 <span className="text-2xl">📝</span>
                             </div>
-                        </div>
+                        </Link>
 
-                        <div className="p-6 border-2 border-gray-200 rounded-lg hover:border-black transition-all cursor-pointer">
+                        <Link href="/member/mypage" className="block p-6 border-2 border-gray-200 rounded-lg hover:border-black hover:shadow-lg transition-all cursor-pointer">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="text-lg font-semibold text-black mb-2">공지사항</h4>
-                                    <p className="text-gray-600 text-sm">새로운 소식을 확인하세요</p>
+                                    <h4 className="text-lg font-semibold text-black mb-2">마이페이지</h4>
+                                    <p className="text-gray-600 text-sm">내 정보를 확인하고 수정하세요</p>
                                 </div>
-                                <span className="text-2xl">📢</span>
+                                <span className="text-2xl">👤</span>
                             </div>
-                        </div>
+                        </Link>
                     </div>
                 </div>
 
