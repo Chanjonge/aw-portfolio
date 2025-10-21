@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import MemberManagement from '@/components/MemberManagement';
 
 interface User {
     id: string;
@@ -37,7 +38,7 @@ interface Question {
     isRequired: boolean;
 }
 
-type TabType = 'users' | 'portfolios' | 'questions';
+type TabType = 'users' | 'portfolios' | 'questions' | 'members';
 
 export default function SuperAdminPage() {
     const router = useRouter();
@@ -400,6 +401,9 @@ export default function SuperAdminPage() {
                         </button>
                         <button onClick={() => setActiveTab('users')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'users' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
                             사용자 관리
+                        </button>
+                        <button onClick={() => setActiveTab('members')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'members' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
+                            회원 관리
                         </button>
                     </div>
                 </div>
@@ -884,6 +888,11 @@ export default function SuperAdminPage() {
                     </div>
                 </div>
             )}
+
+                {/* Members Tab */}
+                {activeTab === 'members' && (
+                    <MemberManagement token={localStorage.getItem('token') || ''} />
+                )}
         </div>
     );
 }

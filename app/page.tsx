@@ -114,7 +114,7 @@ export default function Home() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {portfolios.map((portfolio) => (
-                            <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="block border-1 border-2 border-black rounded-lg transition-all overflow-hidden group">
+                            <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="block border-1 border-black rounded-lg transition-all overflow-hidden group">
                                 {portfolio.thumbnail && (
                                     <div className="w-full h-48 h-50 bg-gray-200 overflow-hidden">
                                         <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

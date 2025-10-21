@@ -58,3 +58,14 @@ model FormSubmission {
   ipAddress   String?
 }
 
+model Member {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  username    String   @unique // 아이디
+  password    String   // 비밀번호 (해시됨)
+  companyName String   // 상호명
+  isActive    Boolean  @default(true) // 활성/비활성
+  createdAt   DateTime @default(now())
+  createdBy   String?  // 생성한 관리자 ID
+  lastLogin   DateTime?
+}
+
