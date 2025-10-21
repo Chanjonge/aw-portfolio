@@ -52,20 +52,12 @@ model FormSubmission {
   id          String     @id @default(auto()) @map("_id") @db.ObjectId
   portfolioId String     @db.ObjectId // Foreign key to Portfolio
   portfolio   Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  submittedBy String?    // Optional user identifier
+  companyName String     // 상호명 (제출자)
+  password    String     // 4자리 비밀번호 (해시됨)
   responses   String     // JSON string of responses
+  isDraft     Boolean    @default(false) // 임시저장 여부
   completedAt DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   ipAddress   String?
-}
-
-model Member {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  username    String   @unique // 아이디
-  password    String   // 비밀번호 (해시됨)
-  companyName String   // 상호명
-  isActive    Boolean  @default(true) // 활성/비활성
-  createdAt   DateTime @default(now())
-  createdBy   String?  // 생성한 관리자 ID
-  lastLogin   DateTime?
 }
 

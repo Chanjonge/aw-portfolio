@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
 
 // GET all submissions (Admin or Member)
 export async function GET(request: NextRequest) {
@@ -74,22 +75,27 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// CREATE submission (public)
+// CREATE submission
 export async function POST(request: NextRequest) {
     try {
-        const { portfolioId, responses, submittedBy } = await request.json();
+        const { portfolioId, companyName, password, responses, isDraft } = await request.json();
 
-        if (!portfolioId || !responses) {
-            return NextResponse.json({ error: '포트폴리오 ID와 응답 데이터가 필요합니다.' }, { status: 400 });
+        if (!portfolioId || !companyName || !password || !responses) {
+            return NextResponse.json({ error: '모든 필드가 필요합니다.' }, { status: 400 });
         }
+
+        // 비밀번호 해시
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
 
         const submission = await prisma.formSubmission.create({
             data: {
                 portfolioId,
+                companyName,
+                password: hashedPassword,
                 responses: JSON.stringify(responses),
-                submittedBy,
+                isDraft: isDraft || false,
                 ipAddress,
             },
         });
