@@ -1,0 +1,131 @@
+╔════════════════════════════════════════════════════════╗
+║                                                        ║
+║     Vercel 프로덕션 DB에 데이터 생성하기             ║
+║                                                        ║
+╚════════════════════════════════════════════════════════╝
+
+【문제】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ 로컬: 데이터 있음 (로그인 가능)
+❌ Vercel: 데이터 없음 (로그인 불가)
+
+→ 로컬에서 실행한 seed는 로컬 DB에만 적용됨
+→ Vercel 프로덕션 DB는 비어있음!
+
+
+【해결 방법】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1단계: Git에 커밋 및 푸시
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+새로 만든 /api/seed 엔드포인트를 Vercel에 배포합니다.
+
+  git add .
+  git commit -m "Add seed API endpoint"
+  git push origin main
+
+
+2단계: Vercel 배포 완료 대기
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vercel Dashboard에서 배포 상태 확인:
+- Deployments 탭
+- "Ready" 상태가 될 때까지 대기 (약 1-2분)
+
+
+3단계: Vercel 환경 변수 추가 (선택사항)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+더 안전하게 하려면:
+Vercel Dashboard → Settings → Environment Variables
+
+추가:
+  Key: SEED_SECRET_KEY
+  Value: my-secure-seed-key-2025
+  Environment: Production
+
+
+4단계: Seed API 실행
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+방법 A) PowerShell에서:
+
+  $body = @{
+      secretKey = "default-seed-key-2025"
+  } | ConvertTo-Json
+
+  Invoke-RestMethod -Uri "https://aw-portfolio-chi.vercel.app/api/seed" -Method POST -Body $body -ContentType "application/json"
+
+
+방법 B) 브라우저 콘솔 (F12)에서:
+
+  fetch('https://aw-portfolio-chi.vercel.app/api/seed', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      secretKey: 'default-seed-key-2025' 
+    })
+  })
+  .then(r => r.json())
+  .then(console.log)
+
+
+방법 C) curl로 (Git Bash 또는 WSL):
+
+  curl -X POST https://aw-portfolio-chi.vercel.app/api/seed \
+    -H "Content-Type: application/json" \
+    -d '{"secretKey":"default-seed-key-2025"}'
+
+
+5단계: 로그인 테스트
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+https://aw-portfolio-chi.vercel.app/admin/login
+
+Email:    admin@example.com
+Password: admin123
+
+
+【생성될 데이터】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Super Admin 계정 1개
+✅ 샘플 포트폴리오 3개
+  - 웹 개발 포트폴리오
+  - 디자인 포트폴리오
+  - 마케팅 포트폴리오
+✅ 샘플 질문 6개 (포트폴리오당 2개)
+
+
+【보안 참고】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ Seed API는 한 번만 실행하면 됩니다
+⚠️ 이미 관리자가 있으면 실행되지 않습니다
+⚠️ 나중에 /api/seed 폴더를 삭제해도 됩니다
+
+
+【문제 해결】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ "Unauthorized" 오류
+   → secretKey가 틀렸습니다
+   → 기본값: "default-seed-key-2025"
+
+❌ "Super admin already exists" 오류
+   → 이미 데이터가 생성되었습니다
+   → 로그인 시도해보세요
+
+❌ 500 Error
+   → Vercel 로그 확인
+   → 환경 변수가 제대로 설정되었는지 확인
+
+
+═══════════════════════════════════════════════════════
+
+다음 단계:
+1. git push로 배포
+2. Seed API 실행
+3. 로그인 테스트!
+
