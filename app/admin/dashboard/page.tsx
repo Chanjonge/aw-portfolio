@@ -224,7 +224,7 @@ export default function AdminDashboard() {
                             </button>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-6 member-list">
                             <div>
                                 <div className="text-sm text-gray-600">포트폴리오</div>
                                 <div className="font-semibold">{selectedSubmission.portfolio.title}</div>
