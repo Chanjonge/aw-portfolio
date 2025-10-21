@@ -140,7 +140,7 @@ export default function MemberManagement({ token }: MemberManagementProps) {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 member-list">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -201,11 +201,7 @@ export default function MemberManagement({ token }: MemberManagementProps) {
                             </div>
 
                             <div className="flex gap-4 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowForm(false)}
-                                    className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-100 transition-all"
-                                >
+                                <button type="button" onClick={() => setShowForm(false)} className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-100 transition-all">
                                     취소
                                 </button>
                                 <button type="submit" className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
@@ -247,21 +243,15 @@ export default function MemberManagement({ token }: MemberManagementProps) {
                                     <td className="px-6 py-4 font-semibold">{member.username}</td>
                                     <td className="px-6 py-4">{member.companyName}</td>
                                     <td className="px-6 py-4 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${member.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                            {member.isActive ? '활성' : '비활성'}
-                                        </span>
+                                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${member.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{member.isActive ? '활성' : '비활성'}</span>
                                     </td>
-                                    <td className="px-6 py-4 text-center text-sm text-gray-600">
-                                        {member.lastLogin ? new Date(member.lastLogin).toLocaleString('ko-KR') : '로그인 기록 없음'}
-                                    </td>
+                                    <td className="px-6 py-4 text-center text-sm text-gray-600">{member.lastLogin ? new Date(member.lastLogin).toLocaleString('ko-KR') : '로그인 기록 없음'}</td>
                                     <td className="px-6 py-4 text-center text-sm text-gray-600">{new Date(member.createdAt).toLocaleDateString('ko-KR')}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center gap-2">
                                             <button
                                                 onClick={() => handleToggleActive(member.id, member.isActive)}
-                                                className={`px-3 py-1 text-sm rounded font-semibold transition-colors ${
-                                                    member.isActive ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                }`}
+                                                className={`px-3 py-1 text-sm rounded font-semibold transition-colors ${member.isActive ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
                                             >
                                                 {member.isActive ? '비활성화' : '활성화'}
                                             </button>
@@ -289,4 +279,3 @@ export default function MemberManagement({ token }: MemberManagementProps) {
         </div>
     );
 }
-
