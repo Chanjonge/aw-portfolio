@@ -5,12 +5,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   password  String
   name      String
@@ -20,7 +20,7 @@ model User {
 }
 
 model Portfolio {
-  id          String           @id @default(cuid())
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
   title       String           // Portfolio title
   description String?          // Portfolio description
   slug        String           @unique // URL slug for portfolio
@@ -34,8 +34,8 @@ model Portfolio {
 }
 
 model Question {
-  id          String    @id @default(cuid())
-  portfolioId String    // Foreign key to Portfolio
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  portfolioId String    @db.ObjectId // Foreign key to Portfolio
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   step        Int       // Step number (1, 2, 3, 4, 5+)
   title       String    // Question title
@@ -49,8 +49,8 @@ model Question {
 }
 
 model FormSubmission {
-  id          String     @id @default(cuid())
-  portfolioId String     // Foreign key to Portfolio
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  portfolioId String     @db.ObjectId // Foreign key to Portfolio
   portfolio   Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   submittedBy String?    // Optional user identifier
   responses   String     // JSON string of responses
