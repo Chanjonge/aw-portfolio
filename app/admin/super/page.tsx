@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import MemberManagement from '@/components/MemberManagement';
 
 interface User {
     id: string;
@@ -38,7 +37,7 @@ interface Question {
     isRequired: boolean;
 }
 
-type TabType = 'users' | 'portfolios' | 'questions' | 'members';
+type TabType = 'users' | 'portfolios' | 'questions' | 'submissions';
 
 export default function SuperAdminPage() {
     const router = useRouter();
@@ -402,8 +401,8 @@ export default function SuperAdminPage() {
                         <button onClick={() => setActiveTab('users')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'users' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
                             사용자 관리
                         </button>
-                        <button onClick={() => setActiveTab('members')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'members' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
-                            회원 관리
+                        <button onClick={() => setActiveTab('submissions')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
+                            제출 목록
                         </button>
                     </div>
                 </div>
@@ -890,7 +889,12 @@ export default function SuperAdminPage() {
             )}
 
             {/* Members Tab */}
-            {activeTab === 'members' && <MemberManagement token={localStorage.getItem('token') || ''} />}
+            {activeTab === 'submissions' && (
+                <div>
+                    <h2 className="text-2xl font-bold mb-6">제출 목록</h2>
+                    <p className="text-gray-600 mb-4">포트폴리오 제출 내역을 확인할 수 있습니다. (구현 예정)</p>
+                </div>
+            )}
         </div>
     );
 }

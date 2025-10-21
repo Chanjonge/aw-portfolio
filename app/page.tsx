@@ -88,14 +88,9 @@ export default function Home() {
                                     </button>
                                 </>
                             ) : (
-                                <div className="flex gap-3">
-                                    <Link href="/member/login" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
-                                        회원 로그인
-                                    </Link>
-                                    <Link href="/admin/login" className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
-                                        관리자 로그인
-                                    </Link>
-                                </div>
+                                <Link href="/admin/login" className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                                    관리자 로그인
+                                </Link>
                             )}
                         </div>
                     </div>
