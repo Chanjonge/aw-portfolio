@@ -39,12 +39,28 @@ interface Question {
 
 type TabType = 'users' | 'portfolios' | 'questions' | 'submissions';
 
+interface Submission {
+    id: string;
+    portfolioId: string;
+    companyName: string;
+    password: string;
+    isDraft: boolean;
+    completedAt: string;
+    updatedAt: string;
+    responses: any;
+    portfolio: {
+        title: string;
+        slug: string;
+    };
+}
+
 export default function SuperAdminPage() {
     const router = useRouter();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [users, setUsers] = useState<User[]>([]);
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
     const [questions, setQuestions] = useState<Question[]>([]);
+    const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [selectedPortfolio, setSelectedPortfolio] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('portfolios');
@@ -155,6 +171,23 @@ export default function SuperAdminPage() {
             }
         } catch (error) {
             console.error('Failed to fetch questions:', error);
+        }
+    };
+
+    const fetchSubmissions = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/submissions', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setSubmissions(data.submissions || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch submissions:', error);
         }
     };
 
@@ -401,7 +434,7 @@ export default function SuperAdminPage() {
                         <button onClick={() => setActiveTab('users')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'users' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
                             사용자 관리
                         </button>
-                        <button onClick={() => setActiveTab('submissions')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
+                        <button onClick={() => { setActiveTab('submissions'); fetchSubmissions(); }} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
                             제출 목록
                         </button>
                     </div>
@@ -888,11 +921,134 @@ export default function SuperAdminPage() {
                 </div>
             )}
 
-            {/* Members Tab */}
+            {/* Submissions Tab */}
             {activeTab === 'submissions' && (
                 <div>
-                    <h2 className="text-2xl font-bold mb-6">제출 목록</h2>
-                    <p className="text-gray-600 mb-4">포트폴리오 제출 내역을 확인할 수 있습니다. (구현 예정)</p>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold">제출 목록</h2>
+                        <button onClick={fetchSubmissions} className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
+                            🔄 새로고침
+                        </button>
+                    </div>
+
+                    {submissions.length === 0 ? (
+                        <div className="bg-white border-2 border-gray-200 rounded-lg p-12 text-center">
+                            <span className="text-6xl mb-4 block">📝</span>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">제출 내역이 없습니다</h3>
+                            <p className="text-gray-600">사용자가 포트폴리오를 제출하면 여기에 표시됩니다</p>
+                        </div>
+                    ) : (
+                        <div className="bg-white border-2 border-black rounded-lg overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b-2 border-black">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">상호명</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">비밀번호</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">포트폴리오</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">상태</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">제출일</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">작업</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {submissions.map((submission) => (
+                                            <tr key={submission.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 text-sm font-semibold text-black">
+                                                    {submission.companyName}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-mono text-gray-700">
+                                                    <span className="px-2 py-1 bg-gray-100 rounded">
+                                                        {submission.password.slice(0, 10)}...
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">
+                                                    {submission.portfolio.title}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    {submission.isDraft ? (
+                                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                                                            임시저장
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                                            제출완료
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">
+                                                    {new Date(submission.isDraft ? submission.updatedAt : submission.completedAt).toLocaleDateString('ko-KR', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                    })}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const responseText = Object.entries(submission.responses)
+                                                                    .map(([key, value]) => `${key}: ${value}`)
+                                                                    .join('\n\n');
+                                                                alert(`제출 내용:\n\n${responseText}`);
+                                                            }}
+                                                            className="text-black font-semibold hover:underline"
+                                                        >
+                                                            상세보기
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm('이 제출을 삭제하시겠습니까?')) {
+                                                                    try {
+                                                                        const token = localStorage.getItem('token');
+                                                                        const response = await fetch(`/api/submissions/${submission.id}`, {
+                                                                            method: 'DELETE',
+                                                                            headers: {
+                                                                                'Authorization': `Bearer ${token}`,
+                                                                            },
+                                                                        });
+
+                                                                        if (response.ok) {
+                                                                            alert('삭제되었습니다.');
+                                                                            fetchSubmissions();
+                                                                        } else {
+                                                                            const data = await response.json();
+                                                                            alert(data.error || '삭제 실패');
+                                                                        }
+                                                                    } catch (error) {
+                                                                        console.error('Delete error:', error);
+                                                                        alert('삭제 중 오류가 발생했습니다.');
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="text-red-600 font-semibold hover:underline"
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Summary */}
+                            <div className="px-6 py-4 bg-gray-50 border-t-2 border-gray-200">
+                                <div className="flex gap-6 text-sm text-gray-600">
+                                    <span>
+                                        전체: <strong className="text-black">{submissions.length}</strong>건
+                                    </span>
+                                    <span>
+                                        제출완료: <strong className="text-green-600">{submissions.filter(s => !s.isDraft).length}</strong>건
+                                    </span>
+                                    <span>
+                                        임시저장: <strong className="text-yellow-600">{submissions.filter(s => s.isDraft).length}</strong>건
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
