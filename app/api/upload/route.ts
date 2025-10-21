@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
+import { put } from '@vercel/blob';
 import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -28,24 +27,27 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: '이미지 파일만 업로드 가능합니다.' }, { status: 400 });
         }
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
         // 파일명 생성 (타임스탬프 + 원본 파일명)
         const timestamp = Date.now();
         const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const filename = `${timestamp}_${originalName}`;
+        const filename = `uploads/${timestamp}_${originalName}`;
 
-        // public/uploads 폴더에 저장
-        const path = join(process.cwd(), 'public', 'uploads', filename);
-        await writeFile(path, buffer);
+        console.log('📤 Uploading to Vercel Blob:', filename);
+
+        // Vercel Blob에 업로드
+        const blob = await put(filename, file, {
+            access: 'public',
+        });
+
+        console.log('✅ Upload successful:', blob.url);
 
         // URL 반환
-        const url = `/uploads/${filename}`;
-
-        return NextResponse.json({ url }, { status: 200 });
+        return NextResponse.json({ url: blob.url }, { status: 200 });
     } catch (error) {
-        console.error('Upload error:', error);
-        return NextResponse.json({ error: '파일 업로드에 실패했습니다.' }, { status: 500 });
+        console.error('❌ Upload error:', error);
+        return NextResponse.json({ 
+            error: '파일 업로드에 실패했습니다.',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }

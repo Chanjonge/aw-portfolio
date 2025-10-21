@@ -5,54 +5,63 @@ import bcrypt from 'bcryptjs';
 export async function POST(request: NextRequest) {
     try {
         console.log('🔄 Seed API called');
-        
+
         // 보안을 위해 비밀 키 확인
         let body;
         try {
             body = await request.json();
         } catch (e) {
             console.error('Failed to parse JSON:', e);
-            return NextResponse.json({ 
-                error: 'Invalid JSON' 
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    error: 'Invalid JSON',
+                },
+                { status: 400 }
+            );
         }
-        
+
         const { secretKey } = body;
         console.log('🔑 Secret key received:', secretKey ? 'yes' : 'no');
-        
+
         // SEED_SECRET_KEY 환경 변수가 없으면 기본값 사용 (개발용)
         const expectedKey = process.env.SEED_SECRET_KEY || 'default-seed-key-2025';
         console.log('🔑 Expected key:', expectedKey);
-        
+
         if (secretKey !== expectedKey) {
             console.log('❌ Secret key mismatch');
-            return NextResponse.json({ 
-                error: 'Unauthorized',
-                message: 'Invalid secret key' 
-            }, { status: 401 });
+            return NextResponse.json(
+                {
+                    error: 'Unauthorized',
+                    message: 'Invalid secret key',
+                },
+                { status: 401 }
+            );
         }
 
         console.log('✅ Secret key valid, checking existing admin...');
 
         // 이미 관리자가 있는지 확인
         const existingAdmin = await prisma.user.findFirst({
-            where: { role: 'SUPER_ADMIN' }
+            where: { role: 'SUPER_ADMIN' },
         });
 
         if (existingAdmin) {
             console.log('⚠️ Super admin already exists');
-            return NextResponse.json({ 
-                success: false,
-                message: 'Super admin already exists',
-                admin: { email: existingAdmin.email }
-            }, { status: 200 }); // 200으로 변경
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: 'Super admin already exists',
+                    admin: { email: existingAdmin.email },
+                },
+                { status: 200 }
+            ); // 200으로 변경
         }
 
         console.log('🔨 Creating super admin...');
 
         // Super Admin 생성
         const hashedPassword = await bcrypt.hash('admin123', 10);
-        
+
         const admin = await prisma.user.create({
             data: {
                 email: 'admin@example.com',
@@ -113,7 +122,7 @@ export async function POST(request: NextRequest) {
                     isRequired: true,
                 },
             });
-            
+
             const q2 = await prisma.question.create({
                 data: {
                     portfolioId: portfolio.id,
@@ -125,38 +134,41 @@ export async function POST(request: NextRequest) {
                     isRequired: true,
                 },
             });
-            
+
             questions.push(q1, q2);
         }
 
         console.log(`✅ Created ${questions.length} questions`);
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             success: true,
             message: 'Database seeded successfully! 🎉',
             data: {
-                admin: { 
+                admin: {
                     email: admin.email,
                     name: admin.name,
-                    role: admin.role
+                    role: admin.role,
                 },
                 portfolios: portfolios.length,
-                questions: questions.length
+                questions: questions.length,
             },
             credentials: {
                 email: 'admin@example.com',
-                password: 'admin123'
-            }
+                password: 'admin123',
+            },
         });
     } catch (error: any) {
         console.error('❌ Seed error:', error);
         console.error('Stack:', error.stack);
-        return NextResponse.json({ 
-            success: false,
-            error: 'Seed failed', 
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                success: false,
+                error: 'Seed failed',
+                details: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+            },
+            { status: 500 }
+        );
     }
 }
 
@@ -165,7 +177,6 @@ export async function GET() {
     return NextResponse.json({
         message: 'Seed endpoint',
         usage: 'Send POST request with { "secretKey": "your-key" }',
-        note: 'This endpoint creates initial admin user and sample data'
+        note: 'This endpoint creates initial admin user and sample data',
     });
 }
-
