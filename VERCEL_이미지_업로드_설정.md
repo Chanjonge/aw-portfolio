@@ -83,10 +83,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ url: blob.url }, { status: 200 });
     } catch (error) {
         console.error('Upload error:', error);
-        return NextResponse.json({ 
-            error: '파일 업로드에 실패했습니다.',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                error: '파일 업로드에 실패했습니다.',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            },
+            { status: 500 }
+        );
     }
 }
 ```
@@ -126,8 +129,9 @@ git push origin master
 ## 💰 비용
 
 Vercel Blob Storage:
-- **무료 플랜**: 500MB 저장 공간
-- **Pro 플랜**: 100GB ($0.15/GB 추가)
+
+-   **무료 플랜**: 500MB 저장 공간
+-   **Pro 플랜**: 100GB ($0.15/GB 추가)
 
 일반적인 포트폴리오 사이트는 무료 플랜으로 충분합니다.
 
@@ -138,29 +142,32 @@ Vercel Blob Storage:
 Vercel Blob 외에 다른 옵션들:
 
 ### 1. Cloudinary
-- 무료 플랜: 25GB 저장, 25GB 대역폭
-- 이미지 최적화 자동
-- CDN 포함
+
+-   무료 플랜: 25GB 저장, 25GB 대역폭
+-   이미지 최적화 자동
+-   CDN 포함
 
 ### 2. AWS S3
-- 가장 저렴
-- 설정이 복잡
+
+-   가장 저렴
+-   설정이 복잡
 
 ### 3. Uploadthing
-- Next.js에 최적화
-- 무료 플랜: 2GB
+
+-   Next.js에 최적화
+-   무료 플랜: 2GB
 
 ---
 
 ## 📝 마이그레이션 체크리스트
 
-- [ ] Vercel Blob Storage 생성
-- [ ] `@vercel/blob` 패키지 설치
-- [ ] `app/api/upload/route.ts` 수정
-- [ ] Git 커밋 및 푸시
-- [ ] 배포 완료 확인
-- [ ] 이미지 업로드 테스트
-- [ ] 기존 `public/uploads` 폴더 정리 (선택)
+-   [ ] Vercel Blob Storage 생성
+-   [ ] `@vercel/blob` 패키지 설치
+-   [ ] `app/api/upload/route.ts` 수정
+-   [ ] Git 커밋 및 푸시
+-   [ ] 배포 완료 확인
+-   [ ] 이미지 업로드 테스트
+-   [ ] 기존 `public/uploads` 폴더 정리 (선택)
 
 ---
 
@@ -174,5 +181,5 @@ Vercel Blob 외에 다른 옵션들:
 ---
 
 더 자세한 내용은:
-- https://vercel.com/docs/storage/vercel-blob
 
+-   https://vercel.com/docs/storage/vercel-blob

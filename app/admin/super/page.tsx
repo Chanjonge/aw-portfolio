@@ -652,10 +652,10 @@ export default function SuperAdminPage() {
                                                     },
                                                     body: formData,
                                                 });
-                                                
+
                                                 const data = await response.json();
                                                 console.log('Upload response:', data);
-                                                
+
                                                 if (response.ok && data.url) {
                                                     setPortfolioForm({ ...portfolioForm, thumbnail: data.url });
                                                     alert('✅ 이미지 업로드 성공!\n저장 버튼을 눌러주세요.');
@@ -782,10 +782,10 @@ export default function SuperAdminPage() {
                                                     },
                                                     body: formData,
                                                 });
-                                                
+
                                                 const data = await response.json();
                                                 console.log('Upload response:', data);
-                                                
+
                                                 if (response.ok && data.url) {
                                                     setQuestionForm({ ...questionForm, thumbnail: data.url });
                                                     alert('✅ 이미지 업로드 성공!\n저장 버튼을 눌러주세요.');

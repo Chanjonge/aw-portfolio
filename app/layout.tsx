@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: '언제나 디자인 타입형 리스트1',
+    title: '언제나 디자인 타입형 리스트',
     description: 'Professional form management system',
 };
 

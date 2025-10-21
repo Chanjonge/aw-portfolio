@@ -99,8 +99,8 @@ export default function Home() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="text-center mb-12">
-                    <h2 className="text-4xl font-bold text-black mb-4">타입을 선택하세요</h2>
-                    <p className="text-xl text-gray-600">원하시는 타입을 선택하여 양식을 작성해주세요</p>
+                    <h2 className="text-4xl font-bold text-black mb-4">타입형 리스트</h2>
+                    {/* <p className="text-xl text-gray-600">원하시는 타입을 선택하여 양식을 작성해주세요</p> */}
                 </div>
 
                 {loading ? (
@@ -114,9 +114,9 @@ export default function Home() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {portfolios.map((portfolio) => (
-                            <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="block border-2 border-black rounded-lg transition-all overflow-hidden group">
+                            <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="block border-1 border-2 border-black rounded-lg transition-all overflow-hidden group">
                                 {portfolio.thumbnail && (
-                                    <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                                    <div className="w-full h-48 h-50 bg-gray-200 overflow-hidden">
                                         <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                     </div>
                                 )}
