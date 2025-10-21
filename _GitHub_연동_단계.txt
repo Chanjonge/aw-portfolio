@@ -1,0 +1,42 @@
+================================
+GitHub Desktop으로 프로젝트 올리기
+================================
+
+1. GitHub Desktop 실행
+
+2. File → Add Local Repository 클릭
+
+3. "Choose..." 버튼 클릭 후 이 폴더 선택:
+   C:\Users\alwaysdesign\Desktop\code\port1
+
+4. "repository not found" 메시지가 나오면
+   → "create a repository" 링크 클릭
+
+5. 정보 입력:
+   Name: port1
+   Description: Multi-step form portfolio system
+   Git Ignore: None (이미 있음)
+   License: None
+
+6. "Create Repository" 클릭
+
+7. 왼쪽에 변경된 파일들 확인
+
+8. Summary에 "Initial commit" 입력
+
+9. "Commit to main" 버튼 클릭 (파란 버튼)
+
+10. 상단의 "Publish repository" 클릭
+
+11. Private 체크 (추천) 또는 Public 선택
+
+12. "Publish Repository" 클릭
+
+완료! 🎉
+
+이제 https://github.com/YOUR_USERNAME/port1 에서
+프로젝트를 확인할 수 있습니다!
+
+다음: Vercel 배포
+→ VERCEL_배포_가이드.md 참고
+
