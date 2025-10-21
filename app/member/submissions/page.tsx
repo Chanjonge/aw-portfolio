@@ -7,7 +7,9 @@ import Link from 'next/link';
 interface Submission {
     id: string;
     portfolioId: string;
-    createdAt: string;
+    completedAt: string;
+    submittedBy: string | null;
+    responses: any;
     portfolio: {
         title: string;
         slug: string;
@@ -42,9 +44,19 @@ export default function MemberSubmissionsPage() {
 
                 // Fetch submissions
                 try {
-                    // 현재는 제출 내역 API가 없으므로 빈 배열로 시작
-                    // 추후 API 구현 시 연결
-                    setSubmissions([]);
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/submissions', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        setSubmissions(data.submissions || []);
+                    } else {
+                        console.error('Failed to fetch submissions:', await response.text());
+                    }
                 } catch (error) {
                     console.error('Failed to fetch submissions:', error);
                 }
@@ -144,7 +156,13 @@ export default function MemberSubmissionsPage() {
                                                 {submission.portfolio.title}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {new Date(submission.createdAt).toLocaleDateString('ko-KR')}
+                                                {new Date(submission.completedAt).toLocaleDateString('ko-KR', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
                                             </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
@@ -152,9 +170,9 @@ export default function MemberSubmissionsPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-sm">
-                                                <button className="text-black font-semibold hover:underline">
-                                                    상세보기
-                                                </button>
+                                                <Link href={`/portfolio/${submission.portfolio.slug}`} className="text-black font-semibold hover:underline">
+                                                    다시보기
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}

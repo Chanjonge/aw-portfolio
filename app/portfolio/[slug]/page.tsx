@@ -120,6 +120,18 @@ export default function PortfolioForm() {
 
         setSubmitting(true);
         try {
+            // Get user info for submission
+            let submittedBy = null;
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    submittedBy = userData.id; // Member or Admin ID
+                } catch (error) {
+                    console.error('Failed to parse user data:', error);
+                }
+            }
+
             const response = await fetch('/api/submissions', {
                 method: 'POST',
                 headers: {
@@ -128,6 +140,7 @@ export default function PortfolioForm() {
                 body: JSON.stringify({
                     portfolioId: portfolio.id,
                     responses: formData,
+                    submittedBy: submittedBy,
                 }),
             });
 
