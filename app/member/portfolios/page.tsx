@@ -23,44 +23,45 @@ export default function MemberPortfoliosPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        checkAuth();
-        fetchPortfolios();
-    }, []);
+        const initPage = async () => {
+            // Check auth
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
 
-    const checkAuth = () => {
-        const token = localStorage.getItem('token');
-        const userStr = localStorage.getItem('user');
-
-        if (!token || !userStr) {
-            router.push('/member/login');
-            return;
-        }
-
-        try {
-            const userData = JSON.parse(userStr);
-            if (userData.role !== 'MEMBER') {
-                alert('회원 권한이 필요합니다.');
+            if (!token || !userStr) {
                 router.push('/member/login');
                 return;
             }
-        } catch (error) {
-            router.push('/member/login');
-        }
-    };
 
-    const fetchPortfolios = async () => {
-        try {
-            const response = await fetch('/api/portfolios?active=true');
-            if (response.ok) {
-                const data = await response.json();
-                setPortfolios(data);
+            try {
+                const userData = JSON.parse(userStr);
+                if (userData.role !== 'MEMBER') {
+                    alert('회원 권한이 필요합니다.');
+                    router.push('/member/login');
+                    return;
+                }
+            } catch (error) {
+                router.push('/member/login');
+                return;
             }
-        } catch (error) {
-            console.error('Failed to fetch portfolios:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+
+            // Fetch portfolios
+            try {
+                const response = await fetch('/api/portfolios?active=true');
+                if (response.ok) {
+                    const data = await response.json();
+                    // API returns { portfolios: [...] }
+                    setPortfolios(data.portfolios || data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch portfolios:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initPage();
+    }, [router]);
 
     const handleLogout = () => {
         if (confirm('로그아웃 하시겠습니까?')) {

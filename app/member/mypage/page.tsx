@@ -26,33 +26,33 @@ export default function MemberMyPage() {
     });
 
     useEffect(() => {
-        checkAuth();
-    }, []);
+        const initPage = () => {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
 
-    const checkAuth = () => {
-        const token = localStorage.getItem('token');
-        const userStr = localStorage.getItem('user');
-
-        if (!token || !userStr) {
-            router.push('/member/login');
-            return;
-        }
-
-        try {
-            const userData = JSON.parse(userStr);
-            if (userData.role !== 'MEMBER') {
-                alert('회원 권한이 필요합니다.');
+            if (!token || !userStr) {
                 router.push('/member/login');
                 return;
             }
-            setUser(userData);
-            setFormData({ ...formData, companyName: userData.companyName });
-        } catch (error) {
-            router.push('/member/login');
-        } finally {
-            setLoading(false);
-        }
-    };
+
+            try {
+                const userData = JSON.parse(userStr);
+                if (userData.role !== 'MEMBER') {
+                    alert('회원 권한이 필요합니다.');
+                    router.push('/member/login');
+                    return;
+                }
+                setUser(userData);
+                setFormData(prev => ({ ...prev, companyName: userData.companyName }));
+            } catch (error) {
+                router.push('/member/login');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initPage();
+    }, [router]);
 
     const handleLogout = () => {
         if (confirm('로그아웃 하시겠습니까?')) {

@@ -21,43 +21,42 @@ export default function MemberSubmissionsPage() {
     const [username, setUsername] = useState('');
 
     useEffect(() => {
-        checkAuth();
-    }, []);
+        const initPage = async () => {
+            // Check auth
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
 
-    const checkAuth = () => {
-        const token = localStorage.getItem('token');
-        const userStr = localStorage.getItem('user');
-
-        if (!token || !userStr) {
-            router.push('/member/login');
-            return;
-        }
-
-        try {
-            const userData = JSON.parse(userStr);
-            if (userData.role !== 'MEMBER') {
-                alert('회원 권한이 필요합니다.');
+            if (!token || !userStr) {
                 router.push('/member/login');
                 return;
             }
-            setUsername(userData.username);
-            fetchSubmissions();
-        } catch (error) {
-            router.push('/member/login');
-        }
-    };
 
-    const fetchSubmissions = async () => {
-        try {
-            // 현재는 제출 내역 API가 없으므로 빈 배열로 시작
-            // 추후 API 구현 시 연결
-            setSubmissions([]);
-        } catch (error) {
-            console.error('Failed to fetch submissions:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+            try {
+                const userData = JSON.parse(userStr);
+                if (userData.role !== 'MEMBER') {
+                    alert('회원 권한이 필요합니다.');
+                    router.push('/member/login');
+                    return;
+                }
+                setUsername(userData.username);
+
+                // Fetch submissions
+                try {
+                    // 현재는 제출 내역 API가 없으므로 빈 배열로 시작
+                    // 추후 API 구현 시 연결
+                    setSubmissions([]);
+                } catch (error) {
+                    console.error('Failed to fetch submissions:', error);
+                }
+            } catch (error) {
+                router.push('/member/login');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initPage();
+    }, [router]);
 
     const handleLogout = () => {
         if (confirm('로그아웃 하시겠습니까?')) {
