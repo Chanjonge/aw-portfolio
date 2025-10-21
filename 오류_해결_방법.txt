@@ -1,0 +1,54 @@
+╔════════════════════════════════════════════════════════╗
+║                                                        ║
+║          MongoDB 연결 오류 해결                        ║
+║                                                        ║
+╚════════════════════════════════════════════════════════╝
+
+【문제】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The provided database string is invalid.
+Database must be defined in the connection string
+
+
+【원인】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MongoDB 연결 문자열에 데이터베이스 이름이 없습니다.
+
+
+【해결 방법】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+.env 파일의 DATABASE_URL을 수정하세요:
+
+❌ 잘못된 형식:
+.mongodb.net/?retryWrites=true
+
+✅ 올바른 형식:
+.mongodb.net/myDatabase?retryWrites=true
+              ^^^^^^^^^^
+           데이터베이스 이름 추가!
+
+
+【전체 수정 내용】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+.env 파일을 열고 DATABASE_URL을 다음과 같이 수정:
+
+DATABASE_URL="mongodb+srv://Vercel-Admin-atlas-pink-river:WoFuqpZBwPKxZrpV@atlas-pink-river.txzjjui.mongodb.net/myDatabase?retryWrites=true&w=majority"
+
+※ myDatabase 부분은 원하는 이름으로 변경 가능
+  (예: portfolio, production, portfolioDB 등)
+
+
+【수정 후 실행】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. .env 파일 저장 (Ctrl+S)
+2. 명령어 다시 실행:
+   npm run prisma:push
+
+
+═══════════════════════════════════════════════════════
+
+자세한 내용은 ENV_파일_내용_수정.txt 파일을 참고하세요.
+

@@ -1,0 +1,39 @@
+==============================================
+  .env 파일 수정 내용 (데이터베이스 이름 추가)
+==============================================
+
+아래 내용으로 .env 파일을 수정하세요:
+(myDatabase 부분이 추가되었습니다)
+
+---복사 시작---
+
+DATABASE_URL="mongodb+srv://Vercel-Admin-atlas-pink-river:WoFuqpZBwPKxZrpV@atlas-pink-river.txzjjui.mongodb.net/myDatabase?retryWrites=true&w=majority"
+JWT_SECRET="F8cjHwRaWUe1ffMk9ccaps1hwQ4rakuQARbA6lH1Mws="
+NEXTAUTH_SECRET="BKKUatsUYpdqMOSZPy1aGaVL6IpCGayA82UVglOlupk="
+NEXTAUTH_URL="http://localhost:3000"
+NODE_ENV="development"
+
+---복사 끝---
+
+==============================================
+  변경 사항
+==============================================
+
+DATABASE_URL에서 변경된 부분:
+❌ 이전: .mongodb.net/?retryWrites=true
+✅ 수정: .mongodb.net/myDatabase?retryWrites=true
+
+데이터베이스 이름 "myDatabase"가 추가되었습니다.
+(원하는 다른 이름으로 변경 가능: portfolio, production 등)
+
+==============================================
+  다음 단계
+==============================================
+
+1. .env 파일을 위 내용으로 수정
+2. 파일 저장 (Ctrl+S)
+3. 다시 명령어 실행:
+   npm run prisma:push
+
+==============================================
+
