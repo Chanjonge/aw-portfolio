@@ -189,13 +189,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                         {question.description && <span className="block text-sm text-gray-600 mt-1">{question.description}</span>}
                     </label>
                     <p className="text-sm text-red-500">체크박스 설정 오류: 관리자에게 문의하세요.</p>
-                    <textarea
-                        value={typeof value === 'string' ? value : ''}
-                        onChange={(e) => onChange(e.target.value)}
-                        rows={3}
-                        placeholder="여기에 답변을 입력하세요..."
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
+                    <textarea value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} rows={3} placeholder="여기에 답변을 입력하세요..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" />
                 </div>
             );
         }

@@ -7,11 +7,17 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const activeOnly = searchParams.get('active') === 'true';
+        const categoryId = searchParams.get('categoryId');
+
+        const where: any = {};
+        if (activeOnly) where.isActive = true;
+        if (categoryId) where.categoryId = categoryId;
 
         const portfolios = await prisma.portfolio.findMany({
-            where: activeOnly ? { isActive: true } : undefined,
+            where: Object.keys(where).length > 0 ? where : undefined,
             orderBy: { order: 'asc' },
             include: {
+                category: true,
                 _count: {
                     select: {
                         questions: true,
@@ -42,7 +48,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { title, description, slug, thumbnail, isActive, order } = body;
+        const { title, description, slug, thumbnail, categoryId, isActive, order } = body;
 
         if (!title || !slug) {
             return NextResponse.json({ error: '제목과 슬러그는 필수입니다.' }, { status: 400 });
@@ -54,6 +60,7 @@ export async function POST(request: NextRequest) {
                 description,
                 slug,
                 thumbnail,
+                categoryId: categoryId || null,
                 isActive: isActive ?? true,
                 order: order ?? 0,
             },
@@ -83,7 +90,7 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { id, title, description, slug, thumbnail, isActive, order } = body;
+        const { id, title, description, slug, thumbnail, categoryId, isActive, order } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'ID가 필요합니다.' }, { status: 400 });
@@ -96,6 +103,7 @@ export async function PUT(request: NextRequest) {
                 description,
                 slug,
                 thumbnail,
+                categoryId,
                 isActive,
                 order,
             },

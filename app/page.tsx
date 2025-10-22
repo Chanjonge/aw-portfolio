@@ -11,12 +11,24 @@ interface User {
     role: string;
 }
 
+interface Category {
+    id: string;
+    name: string;
+    slug: string;
+    order: number;
+    _count?: {
+        portfolios: number;
+    };
+}
+
 interface Portfolio {
     id: string;
     title: string;
     description: string;
     slug: string;
     thumbnail?: string;
+    categoryId?: string;
+    category?: Category;
     isActive: boolean;
     order: number;
     _count: {
@@ -28,7 +40,9 @@ interface Portfolio {
 export default function Home() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -43,13 +57,33 @@ export default function Home() {
             }
         }
 
-        // Fetch portfolios
+        // Fetch categories and portfolios
+        fetchCategories();
         fetchPortfolios();
     }, []);
 
+    useEffect(() => {
+        fetchPortfolios();
+    }, [selectedCategory]);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch('/api/categories');
+            const data = await response.json();
+            if (response.ok) {
+                setCategories(data.categories);
+            }
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        }
+    };
+
     const fetchPortfolios = async () => {
         try {
-            const response = await fetch('/api/portfolios?active=true');
+            const url = selectedCategory 
+                ? `/api/portfolios?active=true&categoryId=${selectedCategory}` 
+                : '/api/portfolios?active=true';
+            const response = await fetch(url);
             const data = await response.json();
             if (response.ok) {
                 setPortfolios(data.portfolios);
@@ -102,6 +136,40 @@ export default function Home() {
                     <h2 className="text-4xl font-bold text-black mb-4">타입형 리스트</h2>
                     {/* <p className="text-xl text-gray-600">원하시는 타입을 선택하여 양식을 작성해주세요</p> */}
                 </div>
+
+                {/* Category Filter */}
+                {categories.length > 0 && (
+                    <div className="mb-8">
+                        <div className="flex justify-center gap-3 flex-wrap">
+                            <button
+                                onClick={() => setSelectedCategory(null)}
+                                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                                    selectedCategory === null
+                                        ? 'bg-black text-white'
+                                        : 'bg-white text-black border-2 border-gray-300 hover:border-black'
+                                }`}
+                            >
+                                전체
+                            </button>
+                            {categories.map((category) => (
+                                <button
+                                    key={category.id}
+                                    onClick={() => setSelectedCategory(category.id)}
+                                    className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                                        selectedCategory === category.id
+                                            ? 'bg-black text-white'
+                                            : 'bg-white text-black border-2 border-gray-300 hover:border-black'
+                                    }`}
+                                >
+                                    {category.name}
+                                    {category._count && category._count.portfolios > 0 && (
+                                        <span className="ml-2 text-sm opacity-75">({category._count.portfolios})</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {loading ? (
                     <div className="text-center py-12">

@@ -19,12 +19,24 @@ model User {
   createdBy String?
 }
 
+model Category {
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  name       String      @unique // Category name
+  slug       String      @unique // URL slug
+  order      Int         @default(0) // Display order
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  portfolios Portfolio[]
+}
+
 model Portfolio {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
   title       String           // Portfolio title
   description String?          // Portfolio description
   slug        String           @unique // URL slug for portfolio
   thumbnail   String?          // Thumbnail image URL
+  categoryId  String?          @db.ObjectId // Foreign key to Category
+  category    Category?        @relation(fields: [categoryId], references: [id])
   isActive    Boolean          @default(true)
   order       Int              @default(0) // Display order
   createdAt   DateTime         @default(now())
