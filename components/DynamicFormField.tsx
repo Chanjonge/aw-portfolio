@@ -240,7 +240,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                                 if (option.hasInput && currentValue.inputs?.[option.label]) {
                                                     newInputs[option.label] = currentValue.inputs[option.label];
                                                 }
-                                                
+
                                                 onChange({
                                                     selected: option.label,
                                                     inputs: newInputs,
@@ -300,9 +300,9 @@ export default function DynamicFormField({ question, value, onChange, error }: D
 
                 <div className="space-y-4">
                     {currentValue.map((item: any, itemIdx: number) => (
-                        <div key={itemIdx} className="border-2 border-gray-300 rounded-lg p-4 space-y-3">
+                        <div key={itemIdx} className="border-gray-300 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between items-center mb-3">
-                                <span className="font-semibold text-gray-700">항목 {itemIdx + 1}</span>
+                                {/* <span className="font-semibold text-gray-700">항목 {itemIdx + 1}</span> */}
                                 {currentValue.length > 1 && (
                                     <button
                                         type="button"
