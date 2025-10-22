@@ -30,14 +30,14 @@ async function main() {
 
     console.log(`✅ Created portfolio: ${portfolio.title}`);
 
-    // 질문들 생성
+    // 질문들 생성 - 모두 step 1에 배치 (한 페이지에 모든 질문 표시)
     const questions = [
         // 1. 숙소명(국문)
         {
             portfolioId: portfolio.id,
             step: 1,
             order: 1,
-            title: '숙소명(국문)',
+            title: '1. 숙소명(국문)',
             description: '',
             questionType: 'text',
             isRequired: true,
@@ -50,7 +50,7 @@ async function main() {
             portfolioId: portfolio.id,
             step: 1,
             order: 2,
-            title: '숙소명(영문)',
+            title: '2. 숙소명(영문)',
             description: '',
             questionType: 'text',
             isRequired: true,
@@ -63,17 +63,17 @@ async function main() {
             portfolioId: portfolio.id,
             step: 1,
             order: 3,
-            title: '사업자 관련',
-            description: '대표자명, 연락처, 사업자등록증을 입력해주세요. 항목 추가 버튼으로 여러 개를 등록할 수 있습니다.',
+            title: '3. 사업자 관련',
+            description: '입력 필드 추가 및 삭제 가능',
             questionType: 'repeatable',
             options: JSON.stringify({
                 fields: [
-                    { label: '대표자명', type: 'text', placeholder: '대표자 이름' },
-                    { label: '연락처', type: 'text', placeholder: '010-0000-0000' },
+                    { label: '대표자명', type: 'text', placeholder: '대표자 이름을 입력하세요' },
+                    { label: '번호', type: 'text', placeholder: '연락처를 입력하세요' },
                     { label: '사업자등록증', type: 'file' }
                 ]
             }),
-            isRequired: true,
+            isRequired: false,
             minLength: 0,
         },
 
@@ -82,8 +82,8 @@ async function main() {
             portfolioId: portfolio.id,
             step: 1,
             order: 4,
-            title: '홈페이지 담당자 연락처',
-            description: '홈페이지 관련 문의를 받을 담당자 연락처를 입력해주세요.',
+            title: '4. 홈페이지 담당자 연락처',
+            description: '입력 필드 추가 및 삭제 가능',
             questionType: 'repeatable',
             options: JSON.stringify({
                 fields: [
@@ -100,7 +100,7 @@ async function main() {
             portfolioId: portfolio.id,
             step: 1,
             order: 5,
-            title: '통장사본',
+            title: '5. 통장사본',
             description: '통장사본 파일을 첨부해주세요',
             questionType: 'file',
             isRequired: false,
@@ -110,14 +110,14 @@ async function main() {
         // 6. 농어촌민박신고번호
         {
             portfolioId: portfolio.id,
-            step: 2,
-            order: 1,
-            title: '농어촌민박신고번호',
-            description: '농어촌민박신고번호와 신고증을 첨부해주세요',
+            step: 1,
+            order: 6,
+            title: '6. 농어촌민박신고번호',
+            description: '',
             questionType: 'repeatable',
             options: JSON.stringify({
                 fields: [
-                    { label: '신고번호', type: 'text', placeholder: '신고번호 입력' },
+                    { label: '신고번호', type: 'text', placeholder: '농어촌민박신고번호 입력' },
                     { label: '농어촌민박신고증', type: 'file' }
                 ]
             }),
@@ -128,10 +128,10 @@ async function main() {
         // 7. 통신판매번호
         {
             portfolioId: portfolio.id,
-            step: 2,
-            order: 2,
-            title: '통신판매번호',
-            description: '통신판매번호와 신고증을 첨부해주세요',
+            step: 1,
+            order: 7,
+            title: '7. 통신판매번호',
+            description: '',
             questionType: 'repeatable',
             options: JSON.stringify({
                 fields: [
@@ -146,9 +146,9 @@ async function main() {
         // 8. 숙소 주소
         {
             portfolioId: portfolio.id,
-            step: 2,
-            order: 3,
-            title: '숙소 주소',
+            step: 1,
+            order: 8,
+            title: '8. 숙소 주소',
             description: '도로명 주소로 작성 부탁드립니다.',
             questionType: 'text',
             isRequired: true,
@@ -159,9 +159,9 @@ async function main() {
         // 9. 이메일 주소
         {
             portfolioId: portfolio.id,
-            step: 2,
-            order: 4,
-            title: '이메일 주소',
+            step: 1,
+            order: 9,
+            title: '9. 이메일 주소',
             description: '',
             questionType: 'text',
             isRequired: true,
@@ -172,10 +172,10 @@ async function main() {
         // 10. SNS 계정
         {
             portfolioId: portfolio.id,
-            step: 2,
-            order: 5,
-            title: 'SNS 계정',
-            description: '운영 중인 SNS 계정을 선택하고 주소를 입력해주세요',
+            step: 1,
+            order: 10,
+            title: '10. SNS 계정',
+            description: '',
             questionType: 'checkbox',
             options: JSON.stringify({
                 checkboxes: [
