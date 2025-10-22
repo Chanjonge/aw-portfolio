@@ -1275,7 +1275,7 @@ export default function SuperAdminPage() {
 
             {/* Submissions Tab */}
             {activeTab === 'submissions' && (
-                <div className="max-w-7xl">
+                <div className="max-w-7xl mx-auto">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold">제출 목록</h2>
                         <button onClick={fetchSubmissions} className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
