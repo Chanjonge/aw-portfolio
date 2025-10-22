@@ -152,12 +152,40 @@ export default function PortfolioForm() {
                         return;
                     }
                 }
-                // 체크박스는 checked 배열이 있는지 확인
+                // 체크박스는 다중/단일 선택에 따라 확인
                 else if (question.questionType === 'checkbox') {
-                    if (!value || typeof value !== 'object' || !('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
+                    if (!value || typeof value !== 'object') {
                         newErrors[question.id] = '최소 하나 이상 선택해주세요.';
                         isValid = false;
                         return;
+                    }
+
+                    try {
+                        const options = JSON.parse(question.options || '{}');
+                        const isMultiple = options.multiple !== false; // 기본값은 다중 선택
+                        
+                        if (isMultiple) {
+                            // 다중 선택: checked 배열 확인
+                            if (!('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
+                                newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                                isValid = false;
+                                return;
+                            }
+                        } else {
+                            // 단일 선택: selected 값 확인
+                            if (!('selected' in value) || !(value as any).selected) {
+                                newErrors[question.id] = '하나를 선택해주세요.';
+                                isValid = false;
+                                return;
+                            }
+                        }
+                    } catch {
+                        // JSON 파싱 실패 시 기본 다중 선택으로 처리
+                        if (!('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
+                            newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                            isValid = false;
+                            return;
+                        }
                     }
                 }
                 // 반복 필드는 배열에 데이터가 있는지 확인

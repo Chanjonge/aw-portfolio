@@ -638,11 +638,7 @@ export default function SuperAdminPage() {
                                             <div className="flex-1">
                                                 <h3 className="text-xl font-bold text-black">{portfolio.title}</h3>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    {portfolio.category && (
-                                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                            {portfolio.category.name}
-                                                        </span>
-                                                    )}
+                                                    {portfolio.category && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{portfolio.category.name}</span>}
                                                     {!portfolio.isActive && <span className="text-xs bg-gray-200 px-2 py-1 rounded">비활성</span>}
                                                 </div>
                                             </div>
@@ -824,11 +820,7 @@ export default function SuperAdminPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">카테고리</label>
-                                <select
-                                    value={portfolioForm.categoryId}
-                                    onChange={(e) => setPortfolioForm({ ...portfolioForm, categoryId: e.target.value })}
-                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                >
+                                <select value={portfolioForm.categoryId} onChange={(e) => setPortfolioForm({ ...portfolioForm, categoryId: e.target.value })} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
                                     <option value="">카테고리 선택 (선택사항)</option>
                                     {categories.map((category) => (
                                         <option key={category.id} value={category.id}>
@@ -994,17 +986,145 @@ export default function SuperAdminPage() {
                                     <option value="repeatable">반복 가능한 필드</option>
                                 </select>
                             </div>
-                            {(questionForm.questionType === 'checkbox' || questionForm.questionType === 'repeatable') && (
+                            {questionForm.questionType === 'checkbox' && (
+                                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                                    <h4 className="font-semibold text-black">체크박스 설정</h4>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-black mb-2">선택 방식</label>
+                                            <select
+                                                value={(() => {
+                                                    try {
+                                                        const parsed = JSON.parse(questionForm.options || '{}');
+                                                        return parsed.multiple ? 'multiple' : 'single';
+                                                    } catch {
+                                                        return 'single';
+                                                    }
+                                                })()}
+                                                onChange={(e) => {
+                                                    try {
+                                                        const parsed = JSON.parse(questionForm.options || '{}');
+                                                        parsed.multiple = e.target.value === 'multiple';
+                                                        setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
+                                                    } catch {
+                                                        setQuestionForm({ 
+                                                            ...questionForm, 
+                                                            options: JSON.stringify({ 
+                                                                multiple: e.target.value === 'multiple',
+                                                                checkboxes: []
+                                                            })
+                                                        });
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                            >
+                                                <option value="single">단일 선택 (라디오 버튼)</option>
+                                                <option value="multiple">다중 선택 (체크박스)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-black mb-2">체크박스 개수</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="10"
+                                                value={(() => {
+                                                    try {
+                                                        const parsed = JSON.parse(questionForm.options || '{}');
+                                                        return parsed.checkboxes?.length || 1;
+                                                    } catch {
+                                                        return 1;
+                                                    }
+                                                })()}
+                                                onChange={(e) => {
+                                                    const count = parseInt(e.target.value) || 1;
+                                                    try {
+                                                        const parsed = JSON.parse(questionForm.options || '{}');
+                                                        const currentBoxes = parsed.checkboxes || [];
+                                                        const newBoxes = [];
+                                                        
+                                                        for (let i = 0; i < count; i++) {
+                                                            newBoxes.push(currentBoxes[i] || { 
+                                                                label: `선택지 ${i + 1}`, 
+                                                                hasInput: false 
+                                                            });
+                                                        }
+                                                        
+                                                        parsed.checkboxes = newBoxes;
+                                                        setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
+                                                    } catch {
+                                                        const newBoxes = [];
+                                                        for (let i = 0; i < count; i++) {
+                                                            newBoxes.push({ label: `선택지 ${i + 1}`, hasInput: false });
+                                                        }
+                                                        setQuestionForm({ 
+                                                            ...questionForm, 
+                                                            options: JSON.stringify({ 
+                                                                multiple: false,
+                                                                checkboxes: newBoxes
+                                                            })
+                                                        });
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-semibold text-black">체크박스 옵션</label>
+                                        {(() => {
+                                            try {
+                                                const parsed = JSON.parse(questionForm.options || '{}');
+                                                return (parsed.checkboxes || []).map((checkbox: any, index: number) => (
+                                                    <div key={index} className="flex gap-3 items-center p-3 bg-white rounded border">
+                                                        <span className="text-sm font-medium w-12">{index + 1}.</span>
+                                                        <input
+                                                            type="text"
+                                                            value={checkbox.label || ''}
+                                                            onChange={(e) => {
+                                                                const parsed = JSON.parse(questionForm.options || '{}');
+                                                                parsed.checkboxes[index].label = e.target.value;
+                                                                setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
+                                                            }}
+                                                            placeholder="선택지 제목"
+                                                            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                                                        />
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={checkbox.hasInput || false}
+                                                                onChange={(e) => {
+                                                                    const parsed = JSON.parse(questionForm.options || '{}');
+                                                                    parsed.checkboxes[index].hasInput = e.target.checked;
+                                                                    setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
+                                                                }}
+                                                                className="w-4 h-4"
+                                                            />
+                                                            <span className="text-sm">추가 입력 필드</span>
+                                                        </label>
+                                                    </div>
+                                                ));
+                                            } catch {
+                                                return <p className="text-red-500 text-sm">옵션 설정을 불러올 수 없습니다.</p>;
+                                            }
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {questionForm.questionType === 'repeatable' && (
                                 <div>
-                                    <label className="block text-sm font-semibold text-black mb-2">옵션 설정 (JSON 형식)</label>
+                                    <label className="block text-sm font-semibold text-black mb-2">반복 필드 설정 (JSON 형식)</label>
                                     <textarea
                                         value={questionForm.options}
                                         onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })}
                                         rows={8}
-                                        placeholder={questionForm.questionType === 'checkbox' ? '{"checkboxes": [{"label": "인스타그램", "hasInput": true}]}' : '{"fields": [{"label": "대표자명", "type": "text", "placeholder": "이름"}]}'}
+                                        placeholder='{"fields": [{"label": "대표자명", "type": "text", "placeholder": "이름"}]}'
                                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black font-mono text-sm"
                                     />
-                                    <p className="text-xs text-gray-600 mt-1">{questionForm.questionType === 'checkbox' ? '체크박스: {"checkboxes": [{"label": "라벨", "hasInput": true/false}]}' : '반복 필드: {"fields": [{"label": "라벨", "type": "text/file", "placeholder": "힌트"}]}'}</p>
+                                    <p className="text-xs text-gray-600 mt-1">반복 필드: {`{"fields": [{"label": "라벨", "type": "text/file", "placeholder": "힌트"}]}`}</p>
                                 </div>
                             )}
                             <div>
@@ -1314,21 +1434,13 @@ export default function SuperAdminPage() {
                                                 <td className="px-6 py-4 text-sm font-semibold text-black">{category.name}</td>
                                                 <td className="px-6 py-4 text-sm font-mono text-gray-700">{category.slug}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-600">{category.order}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">
-                                                    {category._count?.portfolios || 0}개
-                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{category._count?.portfolios || 0}개</td>
                                                 <td className="px-6 py-4 text-sm">
                                                     <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleEditCategory(category)}
-                                                            className="text-blue-600 font-semibold hover:underline"
-                                                        >
+                                                        <button onClick={() => handleEditCategory(category)} className="text-blue-600 font-semibold hover:underline">
                                                             수정
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDeleteCategory(category.id)}
-                                                            className="text-red-600 font-semibold hover:underline"
-                                                        >
+                                                        <button onClick={() => handleDeleteCategory(category.id)} className="text-red-600 font-semibold hover:underline">
                                                             삭제
                                                         </button>
                                                     </div>
@@ -1345,32 +1457,23 @@ export default function SuperAdminPage() {
 
             {/* Category Form Modal */}
             {showCategoryForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
-                    setShowCategoryForm(false);
-                    setEditingCategory(null);
-                }}>
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                    onClick={() => {
+                        setShowCategoryForm(false);
+                        setEditingCategory(null);
+                    }}
+                >
                     <div className="bg-white rounded-lg p-8 max-w-md w-full border-2 border-black" onClick={(e) => e.stopPropagation()}>
                         <h3 className="text-2xl font-bold text-black mb-6">{editingCategory ? '카테고리 수정' : '새 카테고리 추가'}</h3>
                         <form onSubmit={handleCreateOrUpdateCategory} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">카테고리명</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={categoryForm.name}
-                                    onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                />
+                                <input type="text" required value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" />
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">슬러그 (URL용)</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={categoryForm.slug}
-                                    onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
-                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                />
+                                <input type="text" required value={categoryForm.slug} onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" />
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">순서</label>
@@ -1384,10 +1487,7 @@ export default function SuperAdminPage() {
                                 />
                             </div>
                             <div className="flex gap-2 pt-4">
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all"
-                                >
+                                <button type="submit" className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
                                     {editingCategory ? '수정' : '생성'}
                                 </button>
                                 <button

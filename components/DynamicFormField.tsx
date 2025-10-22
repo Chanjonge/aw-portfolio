@@ -214,21 +214,45 @@ export default function DynamicFormField({ question, value, onChange, error }: D
 
                 <div className="space-y-3">
                     {parsedOptions.checkboxes.map((option: FieldOption, idx: number) => {
-                        const isChecked = currentValue.checked?.includes(option.label);
+                        const isMultiple = parsedOptions.multiple !== false; // 기본값은 다중 선택
+                        const isChecked = isMultiple 
+                            ? currentValue.checked?.includes(option.label)
+                            : currentValue.selected === option.label;
 
                         return (
                             <div key={idx} className={`border-2 rounded-lg p-4 transition-all ${isChecked ? 'border-black bg-gray-50' : 'border-gray-200'}`}>
                                 <label className="flex items-start gap-3 cursor-pointer">
                                     <input
-                                        type="checkbox"
+                                        type={isMultiple ? "checkbox" : "radio"}
+                                        name={isMultiple ? undefined : `radio-${question.id}`}
                                         checked={isChecked || false}
                                         onChange={(e) => {
-                                            const newChecked = e.target.checked ? [...(currentValue.checked || []), option.label] : (currentValue.checked || []).filter((c: string) => c !== option.label);
+                                            if (isMultiple) {
+                                                // 다중 선택 (체크박스)
+                                                const newChecked = e.target.checked 
+                                                    ? [...(currentValue.checked || []), option.label] 
+                                                    : (currentValue.checked || []).filter((c: string) => c !== option.label);
 
-                                            onChange({
-                                                ...currentValue,
-                                                checked: newChecked,
-                                            });
+                                                onChange({
+                                                    ...currentValue,
+                                                    checked: newChecked,
+                                                });
+                                            } else {
+                                                // 단일 선택 (라디오 버튼)
+                                                onChange({
+                                                    ...currentValue,
+                                                    selected: option.label,
+                                                    inputs: {
+                                                        ...currentValue.inputs,
+                                                        // 다른 옵션의 입력값 제거
+                                                        ...Object.fromEntries(
+                                                            parsedOptions.checkboxes
+                                                                .filter((opt: FieldOption) => opt.label !== option.label)
+                                                                .map((opt: FieldOption) => [opt.label, ''])
+                                                        )
+                                                    }
+                                                });
+                                            }
                                         }}
                                         className="w-5 h-5 mt-0.5 text-black border-2 border-gray-400 rounded focus:ring-2 focus:ring-black cursor-pointer"
                                     />
