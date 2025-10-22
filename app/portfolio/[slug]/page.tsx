@@ -154,7 +154,7 @@ export default function PortfolioForm() {
                 }
                 // 체크박스는 checked 배열이 있는지 확인
                 else if (question.questionType === 'checkbox') {
-                    if (!value || !value.checked || value.checked.length === 0) {
+                    if (!value || typeof value !== 'object' || !('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
                         newErrors[question.id] = '최소 하나 이상 선택해주세요.';
                         isValid = false;
                         return;
@@ -179,13 +179,7 @@ export default function PortfolioForm() {
             }
 
             // 최소 글자 수 체크 (requireMinLength가 true이고 text/textarea일 때만)
-            if (
-                question.requireMinLength && 
-                (question.questionType === 'text' || question.questionType === 'textarea') &&
-                typeof value === 'string' && 
-                value.trim().length > 0 && 
-                value.trim().length < question.minLength
-            ) {
+            if (question.requireMinLength && (question.questionType === 'text' || question.questionType === 'textarea') && typeof value === 'string' && value.trim().length > 0 && value.trim().length < question.minLength) {
                 newErrors[question.id] = `최소 ${question.minLength}자 이상 입력해주세요.`;
                 isValid = false;
             }
