@@ -163,7 +163,7 @@ export default function PortfolioForm() {
                     try {
                         const options = JSON.parse(question.options || '{}');
                         const isMultiple = options.multiple !== false; // 기본값은 다중 선택
-                        
+
                         if (isMultiple) {
                             // 다중 선택: checked 배열 확인
                             if (!('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {

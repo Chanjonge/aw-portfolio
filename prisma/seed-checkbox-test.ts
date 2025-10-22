@@ -7,7 +7,7 @@ async function main() {
 
     // 기존 포트폴리오 찾기 또는 생성
     let portfolio = await prisma.portfolio.findFirst({
-        where: { slug: 'checkbox-test' }
+        where: { slug: 'checkbox-test' },
     });
 
     if (!portfolio) {
@@ -18,14 +18,14 @@ async function main() {
                 slug: 'checkbox-test',
                 isActive: true,
                 order: 999,
-            }
+            },
         });
         console.log('✅ 테스트 포트폴리오 생성됨:', portfolio.title);
     }
 
     // 기존 질문들 삭제
     await prisma.question.deleteMany({
-        where: { portfolioId: portfolio.id }
+        where: { portfolioId: portfolio.id },
     });
 
     // 1. 다중 선택 체크박스 (추가 입력 필드 없음)
@@ -43,12 +43,12 @@ async function main() {
                     { label: '모바일 앱 개발', hasInput: false },
                     { label: 'UI/UX 디자인', hasInput: false },
                     { label: '브랜딩', hasInput: false },
-                    { label: '마케팅', hasInput: false }
-                ]
+                    { label: '마케팅', hasInput: false },
+                ],
             }),
             order: 1,
-            isRequired: true
-        }
+            isRequired: true,
+        },
     });
 
     // 2. 단일 선택 라디오 버튼 (추가 입력 필드 없음)
@@ -65,12 +65,12 @@ async function main() {
                     { label: '100만원 미만', hasInput: false },
                     { label: '100-300만원', hasInput: false },
                     { label: '300-500만원', hasInput: false },
-                    { label: '500만원 이상', hasInput: false }
-                ]
+                    { label: '500만원 이상', hasInput: false },
+                ],
             }),
             order: 2,
-            isRequired: true
-        }
+            isRequired: true,
+        },
     });
 
     // 3. 다중 선택 체크박스 (추가 입력 필드 있음)
@@ -88,12 +88,12 @@ async function main() {
                     { label: '페이스북', hasInput: true },
                     { label: '유튜브', hasInput: true },
                     { label: '틱톡', hasInput: true },
-                    { label: '네이버 블로그', hasInput: true }
-                ]
+                    { label: '네이버 블로그', hasInput: true },
+                ],
             }),
             order: 3,
-            isRequired: true
-        }
+            isRequired: true,
+        },
     });
 
     // 4. 단일 선택 라디오 버튼 (추가 입력 필드 있음)
@@ -110,12 +110,12 @@ async function main() {
                     { label: '이메일', hasInput: true },
                     { label: '전화', hasInput: true },
                     { label: '카카오톡', hasInput: true },
-                    { label: '문자메시지', hasInput: true }
-                ]
+                    { label: '문자메시지', hasInput: true },
+                ],
             }),
             order: 4,
-            isRequired: true
-        }
+            isRequired: true,
+        },
     });
 
     console.log('✅ 체크박스 테스트 질문들이 생성되었습니다!');

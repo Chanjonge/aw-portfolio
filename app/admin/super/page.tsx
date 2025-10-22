@@ -989,7 +989,7 @@ export default function SuperAdminPage() {
                             {questionForm.questionType === 'checkbox' && (
                                 <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
                                     <h4 className="font-semibold text-black">체크박스 설정</h4>
-                                    
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-black mb-2">선택 방식</label>
@@ -1008,12 +1008,12 @@ export default function SuperAdminPage() {
                                                         parsed.multiple = e.target.value === 'multiple';
                                                         setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
                                                     } catch {
-                                                        setQuestionForm({ 
-                                                            ...questionForm, 
-                                                            options: JSON.stringify({ 
+                                                        setQuestionForm({
+                                                            ...questionForm,
+                                                            options: JSON.stringify({
                                                                 multiple: e.target.value === 'multiple',
-                                                                checkboxes: []
-                                                            })
+                                                                checkboxes: [],
+                                                            }),
                                                         });
                                                     }
                                                 }}
@@ -1043,14 +1043,16 @@ export default function SuperAdminPage() {
                                                         const parsed = JSON.parse(questionForm.options || '{}');
                                                         const currentBoxes = parsed.checkboxes || [];
                                                         const newBoxes = [];
-                                                        
+
                                                         for (let i = 0; i < count; i++) {
-                                                            newBoxes.push(currentBoxes[i] || { 
-                                                                label: `선택지 ${i + 1}`, 
-                                                                hasInput: false 
-                                                            });
+                                                            newBoxes.push(
+                                                                currentBoxes[i] || {
+                                                                    label: `선택지 ${i + 1}`,
+                                                                    hasInput: false,
+                                                                }
+                                                            );
                                                         }
-                                                        
+
                                                         parsed.checkboxes = newBoxes;
                                                         setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
                                                     } catch {
@@ -1058,12 +1060,12 @@ export default function SuperAdminPage() {
                                                         for (let i = 0; i < count; i++) {
                                                             newBoxes.push({ label: `선택지 ${i + 1}`, hasInput: false });
                                                         }
-                                                        setQuestionForm({ 
-                                                            ...questionForm, 
-                                                            options: JSON.stringify({ 
+                                                        setQuestionForm({
+                                                            ...questionForm,
+                                                            options: JSON.stringify({
                                                                 multiple: false,
-                                                                checkboxes: newBoxes
-                                                            })
+                                                                checkboxes: newBoxes,
+                                                            }),
                                                         });
                                                     }
                                                 }}
@@ -1113,7 +1115,7 @@ export default function SuperAdminPage() {
                                     </div>
                                 </div>
                             )}
-                            
+
                             {questionForm.questionType === 'repeatable' && (
                                 <div>
                                     <label className="block text-sm font-semibold text-black mb-2">반복 필드 설정 (JSON 형식)</label>

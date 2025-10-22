@@ -215,23 +215,19 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                 <div className="space-y-3">
                     {parsedOptions.checkboxes.map((option: FieldOption, idx: number) => {
                         const isMultiple = parsedOptions.multiple !== false; // 기본값은 다중 선택
-                        const isChecked = isMultiple 
-                            ? currentValue.checked?.includes(option.label)
-                            : currentValue.selected === option.label;
+                        const isChecked = isMultiple ? currentValue.checked?.includes(option.label) : currentValue.selected === option.label;
 
                         return (
                             <div key={idx} className={`border-2 rounded-lg p-4 transition-all ${isChecked ? 'border-black bg-gray-50' : 'border-gray-200'}`}>
                                 <label className="flex items-start gap-3 cursor-pointer">
                                     <input
-                                        type={isMultiple ? "checkbox" : "radio"}
-                                        name={isMultiple ? undefined : `radio-${question.id}`}
+                                        type={isMultiple ? 'checkbox' : 'radio'}
+                                        name={isMultiple ? undefined : `question-${question.id}-radio`}
                                         checked={isChecked || false}
                                         onChange={(e) => {
                                             if (isMultiple) {
                                                 // 다중 선택 (체크박스)
-                                                const newChecked = e.target.checked 
-                                                    ? [...(currentValue.checked || []), option.label] 
-                                                    : (currentValue.checked || []).filter((c: string) => c !== option.label);
+                                                const newChecked = e.target.checked ? [...(currentValue.checked || []), option.label] : (currentValue.checked || []).filter((c: string) => c !== option.label);
 
                                                 onChange({
                                                     ...currentValue,
@@ -239,18 +235,16 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                                 });
                                             } else {
                                                 // 단일 선택 (라디오 버튼)
+                                                const newInputs: { [key: string]: string } = {};
+                                                // 선택된 옵션의 기존 입력값만 유지
+                                                if (option.hasInput && currentValue.inputs?.[option.label]) {
+                                                    newInputs[option.label] = currentValue.inputs[option.label];
+                                                }
+                                                
                                                 onChange({
-                                                    ...currentValue,
                                                     selected: option.label,
-                                                    inputs: {
-                                                        ...currentValue.inputs,
-                                                        // 다른 옵션의 입력값 제거
-                                                        ...Object.fromEntries(
-                                                            parsedOptions.checkboxes
-                                                                .filter((opt: FieldOption) => opt.label !== option.label)
-                                                                .map((opt: FieldOption) => [opt.label, ''])
-                                                        )
-                                                    }
+                                                    inputs: newInputs,
+                                                    // checked 속성 제거 (단일 선택에서는 사용하지 않음)
                                                 });
                                             }
                                         }}
