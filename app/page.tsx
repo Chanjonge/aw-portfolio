@@ -88,14 +88,9 @@ export default function Home() {
                                     </button>
                                 </>
                             ) : (
-                                <div className="flex items-center gap-3">
-                                    <Link href="/my-submissions" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
-                                        내 제출 내역
-                                    </Link>
-                                    <Link href="/admin/login" className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
-                                        관리자 로그인
-                                    </Link>
-                                </div>
+                                <Link href="/my-submissions" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
+                                    내 제출 내역
+                                </Link>
                             )}
                         </div>
                     </div>
@@ -135,6 +130,15 @@ export default function Home() {
                                 </div>
                             </Link>
                         ))}
+                    </div>
+                )}
+
+                {/* Admin Login Link at Bottom */}
+                {!user && (
+                    <div className="text-center mt-16 pt-8 border-t border-gray-200">
+                        <Link href="/admin/login" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+                            관리자 로그인 →
+                        </Link>
                     </div>
                 )}
             </div>
