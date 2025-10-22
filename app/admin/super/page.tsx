@@ -33,8 +33,11 @@ interface Question {
     description?: string;
     thumbnail?: string;
     minLength: number;
+    maxLength?: number;
     order: number;
     isRequired: boolean;
+    questionType?: string;
+    options?: string;
 }
 
 type TabType = 'users' | 'portfolios' | 'questions' | 'submissions';
@@ -96,8 +99,11 @@ export default function SuperAdminPage() {
         description: '',
         thumbnail: '',
         minLength: 10,
+        maxLength: 500,
         order: 0,
         isRequired: true,
+        questionType: 'text',
+        options: '',
     });
 
     useEffect(() => {
@@ -329,8 +335,11 @@ export default function SuperAdminPage() {
                     description: '',
                     thumbnail: '',
                     minLength: 10,
+                    maxLength: 500,
                     order: 0,
                     isRequired: true,
+                    questionType: 'text',
+                    options: '',
                 });
                 await fetchQuestionsByPortfolio(selectedPortfolio);
             } else {
@@ -378,8 +387,11 @@ export default function SuperAdminPage() {
             description: question.description || '',
             thumbnail: question.thumbnail || '',
             minLength: question.minLength,
+            maxLength: question.maxLength || 500,
             order: question.order,
             isRequired: question.isRequired,
+            questionType: question.questionType || 'text',
+            options: question.options || '',
         });
         setShowQuestionForm(true);
     };
@@ -537,8 +549,11 @@ export default function SuperAdminPage() {
                                         description: '',
                                         thumbnail: '',
                                         minLength: 10,
+                                        maxLength: 500,
                                         order: 0,
                                         isRequired: true,
+                                        questionType: 'text',
+                                        options: '',
                                     });
                                     setShowQuestionForm(true);
                                 }}
@@ -806,6 +821,39 @@ export default function SuperAdminPage() {
                                 <textarea value={questionForm.description} onChange={(e) => setQuestionForm({ ...questionForm, description: e.target.value })} rows={3} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" />
                             </div>
                             <div>
+                                <label className="block text-sm font-semibold text-black mb-2">질문 유형</label>
+                                <select 
+                                    value={questionForm.questionType} 
+                                    onChange={(e) => setQuestionForm({ ...questionForm, questionType: e.target.value })} 
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                >
+                                    <option value="text">단답형 (텍스트)</option>
+                                    <option value="textarea">장문형 (여러 줄)</option>
+                                    <option value="file">파일 업로드</option>
+                                    <option value="checkbox">체크박스 (조건부 입력)</option>
+                                    <option value="repeatable">반복 가능한 필드</option>
+                                </select>
+                            </div>
+                            {(questionForm.questionType === 'checkbox' || questionForm.questionType === 'repeatable') && (
+                                <div>
+                                    <label className="block text-sm font-semibold text-black mb-2">옵션 설정 (JSON 형식)</label>
+                                    <textarea 
+                                        value={questionForm.options} 
+                                        onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })} 
+                                        rows={8}
+                                        placeholder={questionForm.questionType === 'checkbox' 
+                                            ? '{"checkboxes": [{"label": "인스타그램", "hasInput": true}]}' 
+                                            : '{"fields": [{"label": "대표자명", "type": "text", "placeholder": "이름"}]}'}
+                                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black font-mono text-sm"
+                                    />
+                                    <p className="text-xs text-gray-600 mt-1">
+                                        {questionForm.questionType === 'checkbox' 
+                                            ? '체크박스: {"checkboxes": [{"label": "라벨", "hasInput": true/false}]}' 
+                                            : '반복 필드: {"fields": [{"label": "라벨", "type": "text/file", "placeholder": "힌트"}]}'}
+                                    </p>
+                                </div>
+                            )}
+                            <div>
                                 <label className="block text-sm font-semibold text-black mb-2">썸네일 이미지 (선택사항)</label>
                                 <input
                                     type="file"
@@ -852,17 +900,30 @@ export default function SuperAdminPage() {
                                     </div>
                                 )}
                             </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-black mb-2">최소 글자 수</label>
-                                <input
-                                    type="number"
-                                    required
-                                    min="1"
-                                    value={questionForm.minLength}
-                                    onChange={(e) => setQuestionForm({ ...questionForm, minLength: parseInt(e.target.value) })}
-                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                />
-                            </div>
+                            {(questionForm.questionType === 'text' || questionForm.questionType === 'textarea') && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-black mb-2">최소 글자 수</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={questionForm.minLength}
+                                            onChange={(e) => setQuestionForm({ ...questionForm, minLength: parseInt(e.target.value) })}
+                                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-black mb-2">최대 글자 수</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={questionForm.maxLength}
+                                            onChange={(e) => setQuestionForm({ ...questionForm, maxLength: parseInt(e.target.value) })}
+                                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex items-center">
                                 <input type="checkbox" id="isRequired" checked={questionForm.isRequired} onChange={(e) => setQuestionForm({ ...questionForm, isRequired: e.target.checked })} className="w-4 h-4 border-2 border-gray-300 rounded" />
                                 <label htmlFor="isRequired" className="ml-2 text-sm font-semibold text-black">

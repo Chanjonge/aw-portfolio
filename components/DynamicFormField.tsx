@@ -33,8 +33,39 @@ interface DynamicFormFieldProps {
 export default function DynamicFormField({ question, value, onChange, error }: DynamicFormFieldProps) {
     const [checkedOptions, setCheckedOptions] = useState<string[]>([]);
     const [repeatableItems, setRepeatableItems] = useState<any[]>([{}]);
+    const [uploading, setUploading] = useState(false);
 
     const parsedOptions = question.options ? JSON.parse(question.options) : null;
+
+    // 파일 업로드 핸들러
+    const handleFileUpload = async (file: File): Promise<string | null> => {
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            
+            if (response.ok && data.url) {
+                return data.url;
+            } else {
+                console.error('Upload failed:', data);
+                alert(`파일 업로드 실패: ${data.error || '알 수 없는 오류'}`);
+                return null;
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('파일 업로드 중 오류가 발생했습니다.');
+            return null;
+        } finally {
+            setUploading(false);
+        }
+    };
 
     // 텍스트 입력
     if (question.questionType === 'text') {
@@ -117,15 +148,20 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                 <input
                     type="file"
                     accept="image/*,.pdf"
-                    onChange={(e) => {
+                    disabled={uploading}
+                    onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                            onChange(file.name); // 임시로 파일명만 저장
+                            const url = await handleFileUpload(file);
+                            if (url) {
+                                onChange(url);
+                            }
                         }
                     }}
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                {value && <p className="text-sm text-gray-600">선택된 파일: {value}</p>}
+                {uploading && <p className="text-sm text-blue-600">⏳ 업로드 중...</p>}
+                {value && !uploading && <p className="text-sm text-green-600">✅ 파일 업로드 완료: {value.split('/').pop()}</p>}
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
         );
@@ -260,25 +296,31 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                             className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                                         />
                                     ) : (
-                                        <input
-                                            type="file"
-                                            accept="image/*,.pdf"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    const newValue = [...currentValue];
-                                                    newValue[itemIdx] = {
-                                                        ...newValue[itemIdx],
-                                                        [field.label]: file.name,
-                                                    };
-                                                    onChange(newValue);
-                                                }
-                                            }}
-                                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800"
-                                        />
-                                    )}
-                                    {item[field.label] && field.type === 'file' && (
-                                        <p className="text-sm text-gray-600 mt-1">파일: {item[field.label]}</p>
+                                        <>
+                                            <input
+                                                type="file"
+                                                accept="image/*,.pdf"
+                                                disabled={uploading}
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const url = await handleFileUpload(file);
+                                                        if (url) {
+                                                            const newValue = [...currentValue];
+                                                            newValue[itemIdx] = {
+                                                                ...newValue[itemIdx],
+                                                                [field.label]: url,
+                                                            };
+                                                            onChange(newValue);
+                                                        }
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            />
+                                            {item[field.label] && field.type === 'file' && (
+                                                <p className="text-sm text-green-600 mt-1">✅ 파일: {item[field.label].split('/').pop()}</p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             ))}

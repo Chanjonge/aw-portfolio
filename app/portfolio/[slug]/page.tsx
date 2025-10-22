@@ -397,15 +397,7 @@ export default function PortfolioForm() {
                                 {currentQuestions.length === 0 ? (
                                     <div className="text-center py-8 text-gray-500">이 단계에는 질문이 없습니다.</div>
                                 ) : (
-                                    currentQuestions.map((question) => (
-                                        <DynamicFormField
-                                            key={question.id}
-                                            question={question}
-                                            value={formData[question.id]}
-                                            onChange={(value) => handleChange(question.id, value)}
-                                            error={errors[question.id]}
-                                        />
-                                    ))
+                                    currentQuestions.map((question) => <DynamicFormField key={question.id} question={question} value={formData[question.id]} onChange={(value) => handleChange(question.id, value)} error={errors[question.id]} />)
                                 )}
                             </div>
                         </div>
@@ -413,21 +405,13 @@ export default function PortfolioForm() {
 
                     {/* Navigation Buttons */}
                     <div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
-                        <button 
-                            onClick={handlePrevious} 
-                            disabled={currentStep === 0} 
-                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}
-                        >
+                        <button onClick={handlePrevious} disabled={currentStep === 0} className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}>
                             이전
                         </button>
 
                         <div className="flex gap-3">
                             {currentStep > 0 && (
-                                <button
-                                    onClick={handleSaveDraft}
-                                    disabled={submitting}
-                                    className="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50"
-                                >
+                                <button onClick={handleSaveDraft} disabled={submitting} className="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50">
                                     💾 임시저장
                                 </button>
                             )}

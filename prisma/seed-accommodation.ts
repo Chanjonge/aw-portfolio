@@ -70,8 +70,8 @@ async function main() {
                 fields: [
                     { label: '대표자명', type: 'text', placeholder: '대표자 이름을 입력하세요' },
                     { label: '번호', type: 'text', placeholder: '연락처를 입력하세요' },
-                    { label: '사업자등록증', type: 'file' }
-                ]
+                    { label: '사업자등록증', type: 'file' },
+                ],
             }),
             isRequired: false,
             minLength: 0,
@@ -89,7 +89,7 @@ async function main() {
                 fields: [
                     { label: '담당자명', type: 'text', placeholder: '이름' },
                     { label: '연락처', type: 'text', placeholder: '010-0000-0000' },
-                ]
+                ],
             }),
             isRequired: true,
             minLength: 0,
@@ -118,8 +118,8 @@ async function main() {
             options: JSON.stringify({
                 fields: [
                     { label: '신고번호', type: 'text', placeholder: '농어촌민박신고번호 입력' },
-                    { label: '농어촌민박신고증', type: 'file' }
-                ]
+                    { label: '농어촌민박신고증', type: 'file' },
+                ],
             }),
             isRequired: false,
             minLength: 0,
@@ -136,8 +136,8 @@ async function main() {
             options: JSON.stringify({
                 fields: [
                     { label: '신고번호', type: 'text', placeholder: '통신판매번호 입력' },
-                    { label: '통신판매신고증', type: 'file' }
-                ]
+                    { label: '통신판매신고증', type: 'file' },
+                ],
             }),
             isRequired: false,
             minLength: 0,
@@ -181,8 +181,8 @@ async function main() {
                 checkboxes: [
                     { label: '인스타그램', hasInput: true },
                     { label: '네이버 블로그', hasInput: true },
-                    { label: '기타', hasInput: true }
-                ]
+                    { label: '기타', hasInput: true },
+                ],
             }),
             isRequired: false,
             minLength: 0,
@@ -210,4 +210,3 @@ main()
     .finally(async () => {
         await prisma.$disconnect();
     });
-
