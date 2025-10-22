@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import DynamicFormField from '@/components/DynamicFormField';
 
 interface Question {
     id: string;
@@ -9,7 +10,10 @@ interface Question {
     title: string;
     description?: string;
     thumbnail?: string;
+    questionType: string;
+    options?: string;
     minLength: number;
+    maxLength?: number;
     order: number;
     isRequired: boolean;
 }
@@ -383,45 +387,24 @@ export default function PortfolioForm() {
                     ) : (
                         /* Step 1+: 질문 단계 */
                         <div>
-                            <div className="mb-8">
+                            <div className="mb-6">
                                 <h2 className="text-2xl font-bold text-black mb-2">단계 {currentStep}</h2>
                                 <p className="text-gray-600">모든 필수 항목을 작성해주세요.</p>
-                                <div className="mt-4 flex gap-3">
-                                    <button onClick={handleSaveDraft} disabled={submitting} className="px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50">
-                                        💾 임시저장
-                                    </button>
-                                    <p className="text-sm text-gray-500 flex items-center">작성 중인 내용을 저장하고 나중에 이어서 작성할 수 있습니다</p>
-                                </div>
                             </div>
 
-                            {/* Questions */}
-                            <div className="space-y-6">
+                            {/* Questions - 스크롤 가능 영역 */}
+                            <div className="max-h-[500px] overflow-y-auto pr-2 space-y-8">
                                 {currentQuestions.length === 0 ? (
                                     <div className="text-center py-8 text-gray-500">이 단계에는 질문이 없습니다.</div>
                                 ) : (
                                     currentQuestions.map((question) => (
-                                        <div key={question.id} className="space-y-3">
-                                            {question.thumbnail && (
-                                                <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
-                                                    <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" />
-                                                </div>
-                                            )}
-                                            <label className="block">
-                                                <span className="text-lg font-semibold text-black">
-                                                    {question.title}
-                                                    {question.isRequired && <span className="text-red-500 ml-1">*</span>}
-                                                </span>
-                                                {question.description && <span className="block text-sm text-gray-600 mt-1">{question.description}</span>}
-                                            </label>
-                                            <textarea
-                                                value={formData[question.id] || ''}
-                                                onChange={(e) => handleChange(question.id, e.target.value)}
-                                                rows={6}
-                                                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${errors[question.id] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
-                                                placeholder="여기에 답변을 입력하세요..."
-                                            />
-                                            {errors[question.id] && <p className="text-sm text-red-500 mt-1">{errors[question.id]}</p>}
-                                        </div>
+                                        <DynamicFormField
+                                            key={question.id}
+                                            question={question}
+                                            value={formData[question.id]}
+                                            onChange={(value) => handleChange(question.id, value)}
+                                            error={errors[question.id]}
+                                        />
                                     ))
                                 )}
                             </div>
@@ -430,23 +413,39 @@ export default function PortfolioForm() {
 
                     {/* Navigation Buttons */}
                     <div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
-                        <button onClick={handlePrevious} disabled={currentStep === 0} className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}>
+                        <button 
+                            onClick={handlePrevious} 
+                            disabled={currentStep === 0} 
+                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}
+                        >
                             이전
                         </button>
 
-                        {currentStep === 0 ? (
-                            <button onClick={handleNext} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
-                                시작하기
-                            </button>
-                        ) : currentStep < maxStep ? (
-                            <button onClick={handleNext} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
-                                다음
-                            </button>
-                        ) : (
-                            <button onClick={handleSubmit} disabled={submitting} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                {submitting ? '제출 중...' : '제출하기'}
-                            </button>
-                        )}
+                        <div className="flex gap-3">
+                            {currentStep > 0 && (
+                                <button
+                                    onClick={handleSaveDraft}
+                                    disabled={submitting}
+                                    className="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50"
+                                >
+                                    💾 임시저장
+                                </button>
+                            )}
+
+                            {currentStep === 0 ? (
+                                <button onClick={handleNext} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                                    시작하기
+                                </button>
+                            ) : currentStep < maxStep ? (
+                                <button onClick={handleNext} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                                    다음
+                                </button>
+                            ) : (
+                                <button onClick={handleSubmit} disabled={submitting} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    {submitting ? '제출 중...' : '제출하기'}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
