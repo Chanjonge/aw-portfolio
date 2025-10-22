@@ -4,16 +4,10 @@ import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
     try {
-        // 관리자 권한 확인
+        // 관리자는 인증 확인 (썸네일 업로드용)
+        // 일반 사용자는 인증 없이 파일 업로드 가능 (폼 제출용)
         const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-        if (!token) {
-            return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
-        }
-
-        const decoded = verifyToken(token);
-        if (!decoded || decoded.role !== 'SUPER_ADMIN') {
-            return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
-        }
+        const isAdmin = token && verifyToken(token);
 
         const formData = await request.formData();
         const file = formData.get('file') as File;
@@ -22,9 +16,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: '파일이 필요합니다.' }, { status: 400 });
         }
 
-        // 파일 타입 확인
-        if (!file.type.startsWith('image/')) {
-            return NextResponse.json({ error: '이미지 파일만 업로드 가능합니다.' }, { status: 400 });
+        // 파일 타입 확인 (이미지 및 PDF 허용)
+        const allowedTypes = ['image/', 'application/pdf'];
+        const isAllowedType = allowedTypes.some(type => file.type.startsWith(type) || file.type === 'application/pdf');
+        
+        if (!isAllowedType) {
+            return NextResponse.json({ error: '이미지 또는 PDF 파일만 업로드 가능합니다.' }, { status: 400 });
+        }
+
+        // 파일 크기 제한 (10MB)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            return NextResponse.json({ error: '파일 크기는 10MB를 초과할 수 없습니다.' }, { status: 400 });
         }
 
         // 파일명 생성 (타임스탬프 + 원본 파일명)
