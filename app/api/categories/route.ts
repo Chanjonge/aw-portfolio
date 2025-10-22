@@ -126,4 +126,3 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: '카테고리 삭제 중 오류가 발생했습니다.' }, { status: 500 });
     }
 }
-

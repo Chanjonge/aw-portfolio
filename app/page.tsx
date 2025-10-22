@@ -80,9 +80,7 @@ export default function Home() {
 
     const fetchPortfolios = async () => {
         try {
-            const url = selectedCategory 
-                ? `/api/portfolios?active=true&categoryId=${selectedCategory}` 
-                : '/api/portfolios?active=true';
+            const url = selectedCategory ? `/api/portfolios?active=true&categoryId=${selectedCategory}` : '/api/portfolios?active=true';
             const response = await fetch(url);
             const data = await response.json();
             if (response.ok) {
@@ -141,30 +139,13 @@ export default function Home() {
                 {categories.length > 0 && (
                     <div className="mb-8">
                         <div className="flex justify-center gap-3 flex-wrap">
-                            <button
-                                onClick={() => setSelectedCategory(null)}
-                                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                                    selectedCategory === null
-                                        ? 'bg-black text-white'
-                                        : 'bg-white text-black border-2 border-gray-300 hover:border-black'
-                                }`}
-                            >
+                            <button onClick={() => setSelectedCategory(null)} className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedCategory === null ? 'bg-black text-white' : 'bg-white text-black border-2 border-gray-300 hover:border-black'}`}>
                                 전체
                             </button>
                             {categories.map((category) => (
-                                <button
-                                    key={category.id}
-                                    onClick={() => setSelectedCategory(category.id)}
-                                    className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                                        selectedCategory === category.id
-                                            ? 'bg-black text-white'
-                                            : 'bg-white text-black border-2 border-gray-300 hover:border-black'
-                                    }`}
-                                >
+                                <button key={category.id} onClick={() => setSelectedCategory(category.id)} className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedCategory === category.id ? 'bg-black text-white' : 'bg-white text-black border-2 border-gray-300 hover:border-black'}`}>
                                     {category.name}
-                                    {category._count && category._count.portfolios > 0 && (
-                                        <span className="ml-2 text-sm opacity-75">({category._count.portfolios})</span>
-                                    )}
+                                    {category._count && category._count.portfolios > 0 && <span className="ml-2 text-sm opacity-75">({category._count.portfolios})</span>}
                                 </button>
                             ))}
                         </div>

@@ -19,6 +19,12 @@ interface Portfolio {
     thumbnail?: string;
     isActive: boolean;
     order: number;
+    categoryId?: string;
+    category?: {
+        id: string;
+        name: string;
+        slug: string;
+    };
     _count?: {
         questions: number;
         submissions: number;
@@ -41,7 +47,19 @@ interface Question {
     options?: string;
 }
 
-type TabType = 'users' | 'portfolios' | 'questions' | 'submissions';
+type TabType = 'users' | 'portfolios' | 'questions' | 'submissions' | 'categories';
+
+interface Category {
+    id: string;
+    name: string;
+    slug: string;
+    order: number;
+    createdAt: string;
+    updatedAt: string;
+    _count?: {
+        portfolios: number;
+    };
+}
 
 interface Submission {
     id: string;
@@ -65,6 +83,7 @@ export default function SuperAdminPage() {
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
     const [questions, setQuestions] = useState<Question[]>([]);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [selectedPortfolio, setSelectedPortfolio] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('portfolios');
@@ -88,6 +107,7 @@ export default function SuperAdminPage() {
         thumbnail: '',
         isActive: true,
         order: 0,
+        categoryId: '',
     });
 
     // Question form
@@ -106,6 +126,15 @@ export default function SuperAdminPage() {
         isRequired: true,
         questionType: 'text',
         options: '',
+    });
+
+    // Category form
+    const [showCategoryForm, setShowCategoryForm] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [categoryForm, setCategoryForm] = useState({
+        name: '',
+        slug: '',
+        order: 0,
     });
 
     useEffect(() => {
@@ -199,6 +228,96 @@ export default function SuperAdminPage() {
         }
     };
 
+    const fetchCategories = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/categories', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setCategories(data.categories || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        }
+    };
+
+    const handleCreateOrUpdateCategory = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+
+        try {
+            const url = '/api/categories';
+            const method = editingCategory ? 'PUT' : 'POST';
+            const body = editingCategory ? { ...categoryForm, id: editingCategory.id } : categoryForm;
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(body),
+            });
+
+            if (response.ok) {
+                alert(editingCategory ? '카테고리가 수정되었습니다.' : '카테고리가 생성되었습니다.');
+                setShowCategoryForm(false);
+                setEditingCategory(null);
+                setCategoryForm({
+                    name: '',
+                    slug: '',
+                    order: 0,
+                });
+                await fetchCategories();
+            } else {
+                const data = await response.json();
+                alert(data.error || '카테고리 저장에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Save category error:', error);
+            alert('카테고리 저장 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleDeleteCategory = async (id: string) => {
+        if (!confirm('정말로 이 카테고리를 삭제하시겠습니까?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/categories?id=${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                alert('카테고리가 삭제되었습니다.');
+                await fetchCategories();
+            } else {
+                const data = await response.json();
+                alert(data.error || '카테고리 삭제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Delete category error:', error);
+            alert('카테고리 삭제 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleEditCategory = (category: Category) => {
+        setEditingCategory(category);
+        setCategoryForm({
+            name: category.name,
+            slug: category.slug,
+            order: category.order,
+        });
+        setShowCategoryForm(true);
+    };
+
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
@@ -257,6 +376,7 @@ export default function SuperAdminPage() {
                     thumbnail: '',
                     isActive: true,
                     order: 0,
+                    categoryId: '',
                 });
                 await fetchPortfolios();
             } else {
@@ -304,6 +424,7 @@ export default function SuperAdminPage() {
             thumbnail: portfolio.thumbnail || '',
             isActive: portfolio.isActive,
             order: portfolio.order,
+            categoryId: portfolio.categoryId || '',
         });
         setShowPortfolioForm(true);
     };
@@ -441,7 +562,13 @@ export default function SuperAdminPage() {
             <div className="bg-white border-b-2 border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex gap-8">
-                        <button onClick={() => setActiveTab('portfolios')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'portfolios' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
+                        <button
+                            onClick={() => {
+                                setActiveTab('portfolios');
+                                fetchCategories();
+                            }}
+                            className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'portfolios' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
+                        >
                             포트폴리오 관리
                         </button>
                         <button onClick={() => setActiveTab('questions')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'questions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
@@ -458,6 +585,15 @@ export default function SuperAdminPage() {
                             className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
                         >
                             제출 목록
+                        </button>
+                        <button
+                            onClick={() => {
+                                setActiveTab('categories');
+                                fetchCategories();
+                            }}
+                            className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'categories' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
+                        >
+                            카테고리 관리
                         </button>
                     </div>
                 </div>
@@ -479,6 +615,7 @@ export default function SuperAdminPage() {
                                         thumbnail: '',
                                         isActive: true,
                                         order: portfolios.length,
+                                        categoryId: '',
                                     });
                                     setShowPortfolioForm(true);
                                 }}
@@ -500,7 +637,14 @@ export default function SuperAdminPage() {
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex-1">
                                                 <h3 className="text-xl font-bold text-black">{portfolio.title}</h3>
-                                                {!portfolio.isActive && <span className="text-xs bg-gray-200 px-2 py-1 rounded ml-2">비활성</span>}
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {portfolio.category && (
+                                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                            {portfolio.category.name}
+                                                        </span>
+                                                    )}
+                                                    {!portfolio.isActive && <span className="text-xs bg-gray-200 px-2 py-1 rounded">비활성</span>}
+                                                </div>
                                             </div>
                                         </div>
                                         {portfolio.description && <p className="text-gray-600 mb-4">{portfolio.description}</p>}
@@ -677,6 +821,21 @@ export default function SuperAdminPage() {
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">설명</label>
                                 <textarea value={portfolioForm.description} onChange={(e) => setPortfolioForm({ ...portfolioForm, description: e.target.value })} rows={3} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-black mb-2">카테고리</label>
+                                <select
+                                    value={portfolioForm.categoryId}
+                                    onChange={(e) => setPortfolioForm({ ...portfolioForm, categoryId: e.target.value })}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                >
+                                    <option value="">카테고리 선택 (선택사항)</option>
+                                    {categories.map((category) => (
+                                        <option key={category.id} value={category.id}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">슬러그 (URL 경로)</label>
@@ -1106,6 +1265,144 @@ export default function SuperAdminPage() {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Categories Tab */}
+            {activeTab === 'categories' && (
+                <div>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold">카테고리 관리</h2>
+                        <button
+                            onClick={() => {
+                                setEditingCategory(null);
+                                setCategoryForm({
+                                    name: '',
+                                    slug: '',
+                                    order: categories.length,
+                                });
+                                setShowCategoryForm(true);
+                            }}
+                            className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all"
+                        >
+                            + 새 카테고리 추가
+                        </button>
+                    </div>
+
+                    {categories.length === 0 ? (
+                        <div className="bg-white border-2 border-gray-200 rounded-lg p-12 text-center">
+                            <span className="text-6xl mb-4 block">📁</span>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">카테고리가 없습니다</h3>
+                            <p className="text-gray-600">새 카테고리를 추가하여 포트폴리오를 분류해보세요</p>
+                        </div>
+                    ) : (
+                        <div className="bg-white border-2 border-black rounded-lg overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b-2 border-black">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">카테고리명</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">슬러그</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">순서</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">포트폴리오 수</th>
+                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">작업</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {categories.map((category) => (
+                                            <tr key={category.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 text-sm font-semibold text-black">{category.name}</td>
+                                                <td className="px-6 py-4 text-sm font-mono text-gray-700">{category.slug}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{category.order}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">
+                                                    {category._count?.portfolios || 0}개
+                                                </td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleEditCategory(category)}
+                                                            className="text-blue-600 font-semibold hover:underline"
+                                                        >
+                                                            수정
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteCategory(category.id)}
+                                                            className="text-red-600 font-semibold hover:underline"
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Category Form Modal */}
+            {showCategoryForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+                    setShowCategoryForm(false);
+                    setEditingCategory(null);
+                }}>
+                    <div className="bg-white rounded-lg p-8 max-w-md w-full border-2 border-black" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-2xl font-bold text-black mb-6">{editingCategory ? '카테고리 수정' : '새 카테고리 추가'}</h3>
+                        <form onSubmit={handleCreateOrUpdateCategory} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-black mb-2">카테고리명</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={categoryForm.name}
+                                    onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-black mb-2">슬러그 (URL용)</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={categoryForm.slug}
+                                    onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-black mb-2">순서</label>
+                                <input
+                                    type="number"
+                                    required
+                                    min="0"
+                                    value={categoryForm.order}
+                                    onChange={(e) => setCategoryForm({ ...categoryForm, order: parseInt(e.target.value) })}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all"
+                                >
+                                    {editingCategory ? '수정' : '생성'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCategoryForm(false);
+                                        setEditingCategory(null);
+                                    }}
+                                    className="flex-1 px-4 py-2 bg-white text-black border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all"
+                                >
+                                    취소
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>
