@@ -50,7 +50,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
             });
 
             const data = await response.json();
-            
+
             if (response.ok && data.url) {
                 return data.url;
             } else {
@@ -87,9 +87,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                     type="text"
                     value={value || ''}
                     onChange={(e) => onChange(e.target.value)}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${
-                        error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
                     placeholder={`${question.title}을(를) 입력하세요`}
                     maxLength={question.maxLength}
                 />
@@ -118,9 +116,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                     value={value || ''}
                     onChange={(e) => onChange(e.target.value)}
                     rows={6}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${
-                        error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
                     placeholder="여기에 답변을 입력하세요..."
                     maxLength={question.maxLength}
                 />
@@ -170,7 +166,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     // 체크박스 (조건부 입력 필드)
     if (question.questionType === 'checkbox' && parsedOptions?.checkboxes) {
         const currentValue = value || { checked: [], inputs: {} };
-        
+
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
@@ -189,7 +185,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                 <div className="space-y-3">
                     {parsedOptions.checkboxes.map((option: FieldOption, idx: number) => {
                         const isChecked = currentValue.checked?.includes(option.label);
-                        
+
                         return (
                             <div key={idx} className="border-2 border-gray-200 rounded-lg p-4">
                                 <label className="flex items-center gap-3 cursor-pointer">
@@ -197,10 +193,8 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                         type="checkbox"
                                         checked={isChecked}
                                         onChange={(e) => {
-                                            const newChecked = e.target.checked
-                                                ? [...(currentValue.checked || []), option.label]
-                                                : (currentValue.checked || []).filter((c: string) => c !== option.label);
-                                            
+                                            const newChecked = e.target.checked ? [...(currentValue.checked || []), option.label] : (currentValue.checked || []).filter((c: string) => c !== option.label);
+
                                             onChange({
                                                 ...currentValue,
                                                 checked: newChecked,
@@ -240,7 +234,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     // 반복 가능한 필드 (추가/삭제 가능)
     if (question.questionType === 'repeatable' && parsedOptions?.fields) {
         const currentValue = value || [];
-        
+
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
@@ -277,9 +271,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
 
                             {parsedOptions.fields.map((field: RepeatableField, fieldIdx: number) => (
                                 <div key={fieldIdx}>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                        {field.label}
-                                    </label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">{field.label}</label>
                                     {field.type === 'text' ? (
                                         <input
                                             type="text"
@@ -317,9 +309,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                                 }}
                                                 className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
-                                            {item[field.label] && field.type === 'file' && (
-                                                <p className="text-sm text-green-600 mt-1">✅ 파일: {item[field.label].split('/').pop()}</p>
-                                            )}
+                                            {item[field.label] && field.type === 'file' && <p className="text-sm text-green-600 mt-1">✅ 파일: {item[field.label].split('/').pop()}</p>}
                                         </>
                                     )}
                                 </div>
@@ -361,13 +351,10 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
                 rows={6}
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${
-                    error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
                 placeholder="여기에 답변을 입력하세요..."
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
     );
 }
-

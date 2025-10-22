@@ -822,11 +822,7 @@ export default function SuperAdminPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">질문 유형</label>
-                                <select 
-                                    value={questionForm.questionType} 
-                                    onChange={(e) => setQuestionForm({ ...questionForm, questionType: e.target.value })} 
-                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                >
+                                <select value={questionForm.questionType} onChange={(e) => setQuestionForm({ ...questionForm, questionType: e.target.value })} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
                                     <option value="text">단답형 (텍스트)</option>
                                     <option value="textarea">장문형 (여러 줄)</option>
                                     <option value="file">파일 업로드</option>
@@ -837,20 +833,14 @@ export default function SuperAdminPage() {
                             {(questionForm.questionType === 'checkbox' || questionForm.questionType === 'repeatable') && (
                                 <div>
                                     <label className="block text-sm font-semibold text-black mb-2">옵션 설정 (JSON 형식)</label>
-                                    <textarea 
-                                        value={questionForm.options} 
-                                        onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })} 
+                                    <textarea
+                                        value={questionForm.options}
+                                        onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })}
                                         rows={8}
-                                        placeholder={questionForm.questionType === 'checkbox' 
-                                            ? '{"checkboxes": [{"label": "인스타그램", "hasInput": true}]}' 
-                                            : '{"fields": [{"label": "대표자명", "type": "text", "placeholder": "이름"}]}'}
+                                        placeholder={questionForm.questionType === 'checkbox' ? '{"checkboxes": [{"label": "인스타그램", "hasInput": true}]}' : '{"fields": [{"label": "대표자명", "type": "text", "placeholder": "이름"}]}'}
                                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black font-mono text-sm"
                                     />
-                                    <p className="text-xs text-gray-600 mt-1">
-                                        {questionForm.questionType === 'checkbox' 
-                                            ? '체크박스: {"checkboxes": [{"label": "라벨", "hasInput": true/false}]}' 
-                                            : '반복 필드: {"fields": [{"label": "라벨", "type": "text/file", "placeholder": "힌트"}]}'}
-                                    </p>
+                                    <p className="text-xs text-gray-600 mt-1">{questionForm.questionType === 'checkbox' ? '체크박스: {"checkboxes": [{"label": "라벨", "hasInput": true/false}]}' : '반복 필드: {"fields": [{"label": "라벨", "type": "text/file", "placeholder": "힌트"}]}'}</p>
                                 </div>
                             )}
                             <div>

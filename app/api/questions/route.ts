@@ -35,9 +35,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: '최고 관리자 권한이 필요합니다.' }, { status: 403 });
         }
 
-        const { portfolioId, step, title, description, thumbnail, minLength, order, isRequired } = await request.json();
+        const { portfolioId, step, title, description, thumbnail, minLength, maxLength, order, isRequired, questionType, options } = await request.json();
 
-        if (!portfolioId || !step || !title || minLength === undefined || order === undefined) {
+        if (!portfolioId || !step || !title || order === undefined) {
             return NextResponse.json({ error: '필수 필드를 입력해주세요.' }, { status: 400 });
         }
 
@@ -48,9 +48,12 @@ export async function POST(request: NextRequest) {
                 title,
                 description: description || '',
                 thumbnail,
-                minLength,
+                minLength: minLength || 0,
+                maxLength: maxLength || 500,
                 order,
                 isRequired: isRequired !== false,
+                questionType: questionType || 'text',
+                options: options || null,
             },
         });
 
@@ -76,7 +79,7 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: '최고 관리자 권한이 필요합니다.' }, { status: 403 });
         }
 
-        const { id, step, title, description, thumbnail, minLength, order, isRequired } = await request.json();
+        const { id, step, title, description, thumbnail, minLength, maxLength, order, isRequired, questionType, options } = await request.json();
 
         if (!id) {
             return NextResponse.json({ error: '질문 ID가 필요합니다.' }, { status: 400 });
@@ -90,8 +93,11 @@ export async function PUT(request: NextRequest) {
                 description,
                 thumbnail,
                 minLength,
+                maxLength,
                 order,
                 isRequired,
+                questionType,
+                options,
             },
         });
 
