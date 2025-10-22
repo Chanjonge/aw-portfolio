@@ -14,6 +14,7 @@ interface Question {
     options?: string;
     minLength: number;
     maxLength?: number;
+    requireMinLength?: boolean;
     order: number;
     isRequired: boolean;
 }
@@ -141,8 +142,16 @@ export default function PortfolioForm() {
         currentQuestions.forEach((question) => {
             const value = formData[question.id] || '';
 
+            // 필수 항목 체크
             if (question.isRequired && value.trim().length === 0) {
                 newErrors[question.id] = '이 항목은 필수입니다.';
+                isValid = false;
+                return;
+            }
+
+            // 최소 글자 수 체크 (requireMinLength가 true일 때만)
+            if (question.requireMinLength && typeof value === 'string' && value.trim().length > 0 && value.trim().length < question.minLength) {
+                newErrors[question.id] = `최소 ${question.minLength}자 이상 입력해주세요.`;
                 isValid = false;
             }
         });

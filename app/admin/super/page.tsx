@@ -34,6 +34,7 @@ interface Question {
     thumbnail?: string;
     minLength: number;
     maxLength?: number;
+    requireMinLength?: boolean;
     order: number;
     isRequired: boolean;
     questionType?: string;
@@ -100,6 +101,7 @@ export default function SuperAdminPage() {
         thumbnail: '',
         minLength: 10,
         maxLength: 500,
+        requireMinLength: false,
         order: 0,
         isRequired: true,
         questionType: 'text',
@@ -336,6 +338,7 @@ export default function SuperAdminPage() {
                     thumbnail: '',
                     minLength: 10,
                     maxLength: 500,
+                    requireMinLength: false,
                     order: 0,
                     isRequired: true,
                     questionType: 'text',
@@ -388,6 +391,7 @@ export default function SuperAdminPage() {
             thumbnail: question.thumbnail || '',
             minLength: question.minLength,
             maxLength: question.maxLength || 500,
+            requireMinLength: question.requireMinLength || false,
             order: question.order,
             isRequired: question.isRequired,
             questionType: question.questionType || 'text',
@@ -550,6 +554,7 @@ export default function SuperAdminPage() {
                                         thumbnail: '',
                                         minLength: 10,
                                         maxLength: 500,
+                                        requireMinLength: false,
                                         order: 0,
                                         isRequired: true,
                                         questionType: 'text',
@@ -891,28 +896,43 @@ export default function SuperAdminPage() {
                                 )}
                             </div>
                             {(questionForm.questionType === 'text' || questionForm.questionType === 'textarea') && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-black mb-2">최소 글자 수</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={questionForm.minLength}
-                                            onChange={(e) => setQuestionForm({ ...questionForm, minLength: parseInt(e.target.value) })}
-                                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                        />
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-black mb-2">최소 글자 수</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={questionForm.minLength}
+                                                onChange={(e) => setQuestionForm({ ...questionForm, minLength: parseInt(e.target.value) })}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                                disabled={!questionForm.requireMinLength}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-black mb-2">최대 글자 수</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={questionForm.maxLength}
+                                                onChange={(e) => setQuestionForm({ ...questionForm, maxLength: parseInt(e.target.value) })}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-black mb-2">최대 글자 수</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={questionForm.maxLength}
-                                            onChange={(e) => setQuestionForm({ ...questionForm, maxLength: parseInt(e.target.value) })}
-                                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                    <div className="flex items-center">
+                                        <input 
+                                            type="checkbox" 
+                                            id="requireMinLength" 
+                                            checked={questionForm.requireMinLength} 
+                                            onChange={(e) => setQuestionForm({ ...questionForm, requireMinLength: e.target.checked })} 
+                                            className="w-4 h-4 border-2 border-gray-300 rounded" 
                                         />
+                                        <label htmlFor="requireMinLength" className="ml-2 text-sm font-semibold text-black">
+                                            최소 글자 수 검증 활성화
+                                        </label>
                                     </div>
-                                </div>
+                                </>
                             )}
                             <div className="flex items-center">
                                 <input type="checkbox" id="isRequired" checked={questionForm.isRequired} onChange={(e) => setQuestionForm({ ...questionForm, isRequired: e.target.checked })} className="w-4 h-4 border-2 border-gray-300 rounded" />

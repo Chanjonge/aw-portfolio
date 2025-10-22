@@ -45,6 +45,7 @@ model Question {
   options     String?   // JSON string for checkbox options, repeatable field configs
   minLength   Int       @default(10) // Minimum character requirement
   maxLength   Int?      // Maximum character requirement
+  requireMinLength Boolean @default(false) // Whether to enforce minLength validation
   order       Int       // Order within the step
   isRequired  Boolean   @default(true)
   createdAt   DateTime  @default(now())

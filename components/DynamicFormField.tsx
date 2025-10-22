@@ -37,14 +37,16 @@ export default function DynamicFormField({ question, value, onChange, error }: D
 
     // 기본값 설정
     const questionType = question.questionType || 'text';
-    const parsedOptions = question.options ? (() => {
-        try {
-            return JSON.parse(question.options);
-        } catch (e) {
-            console.error('Failed to parse options:', e);
-            return null;
-        }
-    })() : null;
+    const parsedOptions = question.options
+        ? (() => {
+              try {
+                  return JSON.parse(question.options);
+              } catch (e) {
+                  console.error('Failed to parse options:', e);
+                  return null;
+              }
+          })()
+        : null;
 
     // 파일 업로드 핸들러
     const handleFileUpload = async (file: File): Promise<string | null> => {
@@ -166,11 +168,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 {uploading && <p className="text-sm text-blue-600">⏳ 업로드 중...</p>}
-                {value && !uploading && (
-                    <p className="text-sm text-green-600">
-                        ✅ 파일 업로드 완료: {typeof value === 'string' ? value.split('/').pop() : value}
-                    </p>
-                )}
+                {value && !uploading && <p className="text-sm text-green-600">✅ 파일 업로드 완료: {typeof value === 'string' ? value.split('/').pop() : value}</p>}
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
         );
@@ -322,11 +320,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                                 }}
                                                 className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
-                                            {item[field.label] && field.type === 'file' && (
-                                                <p className="text-sm text-green-600 mt-1">
-                                                    ✅ 파일: {typeof item[field.label] === 'string' ? item[field.label].split('/').pop() : item[field.label]}
-                                                </p>
-                                            )}
+                                            {item[field.label] && field.type === 'file' && <p className="text-sm text-green-600 mt-1">✅ 파일: {typeof item[field.label] === 'string' ? item[field.label].split('/').pop() : item[field.label]}</p>}
                                         </>
                                     )}
                                 </div>
