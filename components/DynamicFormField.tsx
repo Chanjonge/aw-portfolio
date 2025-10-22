@@ -179,41 +179,44 @@ export default function DynamicFormField({ question, value, onChange, error }: D
         const currentValue = value || { checked: [], inputs: {} };
 
         return (
-            <div className="space-y-3">
+            <div className="space-y-4 bg-white p-6 rounded-lg border-2 border-gray-200">
                 {question.thumbnail && (
                     <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
                         <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" />
                     </div>
                 )}
-                <label className="block">
+                <div>
                     <span className="text-lg font-semibold text-black">
                         {question.title}
                         {question.isRequired && <span className="text-red-500 ml-1">*</span>}
                     </span>
-                    {question.description && <span className="block text-sm text-gray-600 mt-1">{question.description}</span>}
-                </label>
+                    {question.description && <p className="text-sm text-gray-600 mt-1">{question.description}</p>}
+                    <p className="text-xs text-gray-500 mt-2">원하는 항목을 선택하고 정보를 입력해주세요</p>
+                </div>
 
                 <div className="space-y-3">
                     {parsedOptions.checkboxes.map((option: FieldOption, idx: number) => {
                         const isChecked = currentValue.checked?.includes(option.label);
 
                         return (
-                            <div key={idx} className="border-2 border-gray-200 rounded-lg p-4">
-                                <label className="flex items-center gap-3 cursor-pointer">
+                            <div key={idx} className={`border-2 rounded-lg p-4 transition-all ${isChecked ? 'border-black bg-gray-50' : 'border-gray-200'}`}>
+                                <label className="flex items-start gap-3 cursor-pointer">
                                     <input
                                         type="checkbox"
-                                        checked={isChecked}
+                                        checked={isChecked || false}
                                         onChange={(e) => {
-                                            const newChecked = e.target.checked ? [...(currentValue.checked || []), option.label] : (currentValue.checked || []).filter((c: string) => c !== option.label);
+                                            const newChecked = e.target.checked 
+                                                ? [...(currentValue.checked || []), option.label] 
+                                                : (currentValue.checked || []).filter((c: string) => c !== option.label);
 
                                             onChange({
                                                 ...currentValue,
                                                 checked: newChecked,
                                             });
                                         }}
-                                        className="w-5 h-5 text-black border-2 border-gray-300 rounded focus:ring-2 focus:ring-black"
+                                        className="w-5 h-5 mt-0.5 text-black border-2 border-gray-400 rounded focus:ring-2 focus:ring-black cursor-pointer"
                                     />
-                                    <span className="font-semibold text-black">{option.label}</span>
+                                    <span className="font-semibold text-black flex-1">{option.label}</span>
                                 </label>
 
                                 {option.hasInput && isChecked && (
@@ -229,7 +232,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                                 },
                                             });
                                         }}
-                                        placeholder={`${option.label} 입력`}
+                                        placeholder={`${option.label} 주소나 계정을 입력하세요`}
                                         className="mt-3 w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                                     />
                                 )}
@@ -237,7 +240,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                         );
                     })}
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
         );
     }
