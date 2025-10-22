@@ -921,13 +921,7 @@ export default function SuperAdminPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center">
-                                        <input 
-                                            type="checkbox" 
-                                            id="requireMinLength" 
-                                            checked={questionForm.requireMinLength} 
-                                            onChange={(e) => setQuestionForm({ ...questionForm, requireMinLength: e.target.checked })} 
-                                            className="w-4 h-4 border-2 border-gray-300 rounded" 
-                                        />
+                                        <input type="checkbox" id="requireMinLength" checked={questionForm.requireMinLength} onChange={(e) => setQuestionForm({ ...questionForm, requireMinLength: e.target.checked })} className="w-4 h-4 border-2 border-gray-300 rounded" />
                                         <label htmlFor="requireMinLength" className="ml-2 text-sm font-semibold text-black">
                                             최소 글자 수 검증 활성화
                                         </label>

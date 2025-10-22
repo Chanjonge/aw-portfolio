@@ -140,17 +140,52 @@ export default function PortfolioForm() {
         let isValid = true;
 
         currentQuestions.forEach((question) => {
-            const value = formData[question.id] || '';
+            const value = formData[question.id];
 
             // 필수 항목 체크
-            if (question.isRequired && value.trim().length === 0) {
-                newErrors[question.id] = '이 항목은 필수입니다.';
-                isValid = false;
-                return;
+            if (question.isRequired) {
+                // 파일 업로드는 URL이 있는지 확인
+                if (question.questionType === 'file') {
+                    if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+                        newErrors[question.id] = '파일을 업로드해주세요.';
+                        isValid = false;
+                        return;
+                    }
+                }
+                // 체크박스는 checked 배열이 있는지 확인
+                else if (question.questionType === 'checkbox') {
+                    if (!value || !value.checked || value.checked.length === 0) {
+                        newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                        isValid = false;
+                        return;
+                    }
+                }
+                // 반복 필드는 배열에 데이터가 있는지 확인
+                else if (question.questionType === 'repeatable') {
+                    if (!value || !Array.isArray(value) || value.length === 0) {
+                        newErrors[question.id] = '최소 하나 이상 입력해주세요.';
+                        isValid = false;
+                        return;
+                    }
+                }
+                // 텍스트 필드는 문자열 길이 확인
+                else {
+                    if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+                        newErrors[question.id] = '이 항목은 필수입니다.';
+                        isValid = false;
+                        return;
+                    }
+                }
             }
 
-            // 최소 글자 수 체크 (requireMinLength가 true일 때만)
-            if (question.requireMinLength && typeof value === 'string' && value.trim().length > 0 && value.trim().length < question.minLength) {
+            // 최소 글자 수 체크 (requireMinLength가 true이고 text/textarea일 때만)
+            if (
+                question.requireMinLength && 
+                (question.questionType === 'text' || question.questionType === 'textarea') &&
+                typeof value === 'string' && 
+                value.trim().length > 0 && 
+                value.trim().length < question.minLength
+            ) {
                 newErrors[question.id] = `최소 ${question.minLength}자 이상 입력해주세요.`;
                 isValid = false;
             }
