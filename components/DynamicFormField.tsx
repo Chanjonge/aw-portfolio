@@ -175,7 +175,31 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     }
 
     // 체크박스 (조건부 입력 필드)
-    if (questionType === 'checkbox' && parsedOptions?.checkboxes) {
+    if (questionType === 'checkbox') {
+        // parsedOptions가 없거나 checkboxes가 없으면 에러 표시
+        if (!parsedOptions || !parsedOptions.checkboxes || !Array.isArray(parsedOptions.checkboxes)) {
+            console.error('Invalid checkbox options:', parsedOptions);
+            return (
+                <div className="space-y-3">
+                    <label className="block">
+                        <span className="text-lg font-semibold text-black">
+                            {question.title}
+                            {question.isRequired && <span className="text-red-500 ml-1">*</span>}
+                        </span>
+                        {question.description && <span className="block text-sm text-gray-600 mt-1">{question.description}</span>}
+                    </label>
+                    <p className="text-sm text-red-500">체크박스 설정 오류: 관리자에게 문의하세요.</p>
+                    <textarea
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(e) => onChange(e.target.value)}
+                        rows={3}
+                        placeholder="여기에 답변을 입력하세요..."
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                </div>
+            );
+        }
+
         const currentValue = value || { checked: [], inputs: {} };
 
         return (
@@ -205,9 +229,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                         type="checkbox"
                                         checked={isChecked || false}
                                         onChange={(e) => {
-                                            const newChecked = e.target.checked 
-                                                ? [...(currentValue.checked || []), option.label] 
-                                                : (currentValue.checked || []).filter((c: string) => c !== option.label);
+                                            const newChecked = e.target.checked ? [...(currentValue.checked || []), option.label] : (currentValue.checked || []).filter((c: string) => c !== option.label);
 
                                             onChange({
                                                 ...currentValue,
