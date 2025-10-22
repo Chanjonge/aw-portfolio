@@ -41,7 +41,10 @@ model Question {
   title       String    // Question title
   description String?   // Optional description
   thumbnail   String?   // Thumbnail image URL for this question
+  questionType String   @default("text") // text, textarea, file, checkbox, repeatable
+  options     String?   // JSON string for checkbox options, repeatable field configs
   minLength   Int       @default(10) // Minimum character requirement
+  maxLength   Int?      // Maximum character requirement
   order       Int       // Order within the step
   isRequired  Boolean   @default(true)
   createdAt   DateTime  @default(now())

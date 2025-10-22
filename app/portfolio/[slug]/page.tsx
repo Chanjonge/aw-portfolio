@@ -38,7 +38,7 @@ export default function PortfolioForm() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [userRole, setUserRole] = useState<string>('');
-    
+
     // 상호명과 비밀번호
     const [companyName, setCompanyName] = useState('');
     const [password, setPassword] = useState('');
@@ -91,12 +91,12 @@ export default function PortfolioForm() {
     // 인증 단계 검증
     const validateAuth = async (): Promise<boolean> => {
         setAuthError('');
-        
+
         if (!companyName.trim()) {
             setAuthError('상호명을 입력해주세요.');
             return false;
         }
-        
+
         if (password.length !== 4 || !/^\d{4}$/.test(password)) {
             setAuthError('4자리 숫자 비밀번호를 입력해주세요.');
             return false;
@@ -110,7 +110,7 @@ export default function PortfolioForm() {
                 body: JSON.stringify({
                     portfolioId: portfolio?.id,
                     companyName,
-                    password
+                    password,
                 }),
             });
 
@@ -180,9 +180,7 @@ export default function PortfolioForm() {
         setSubmitting(true);
         try {
             const method = existingSubmissionId ? 'PUT' : 'POST';
-            const url = existingSubmissionId 
-                ? `/api/submissions/${existingSubmissionId}` 
-                : '/api/submissions';
+            const url = existingSubmissionId ? `/api/submissions/${existingSubmissionId}` : '/api/submissions';
 
             const response = await fetch(url, {
                 method,
@@ -220,9 +218,7 @@ export default function PortfolioForm() {
         setSubmitting(true);
         try {
             const method = existingSubmissionId ? 'PUT' : 'POST';
-            const url = existingSubmissionId 
-                ? `/api/submissions/${existingSubmissionId}` 
-                : '/api/submissions';
+            const url = existingSubmissionId ? `/api/submissions/${existingSubmissionId}` : '/api/submissions';
 
             const response = await fetch(url, {
                 method,
@@ -359,13 +355,7 @@ export default function PortfolioForm() {
                                     <label className="block text-sm font-bold text-gray-700 mb-2">
                                         상호명 <span className="text-red-500">*</span>
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={companyName}
-                                        onChange={(e) => setCompanyName(e.target.value)}
-                                        placeholder="회사명 또는 이름을 입력하세요"
-                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all"
-                                    />
+                                    <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="회사명 또는 이름을 입력하세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" />
                                 </div>
 
                                 <div>
@@ -397,11 +387,7 @@ export default function PortfolioForm() {
                                 <h2 className="text-2xl font-bold text-black mb-2">단계 {currentStep}</h2>
                                 <p className="text-gray-600">모든 필수 항목을 작성해주세요.</p>
                                 <div className="mt-4 flex gap-3">
-                                    <button
-                                        onClick={handleSaveDraft}
-                                        disabled={submitting}
-                                        className="px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50"
-                                    >
+                                    <button onClick={handleSaveDraft} disabled={submitting} className="px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50">
                                         💾 임시저장
                                     </button>
                                     <p className="text-sm text-gray-500 flex items-center">작성 중인 내용을 저장하고 나중에 이어서 작성할 수 있습니다</p>
@@ -444,11 +430,7 @@ export default function PortfolioForm() {
 
                     {/* Navigation Buttons */}
                     <div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
-                        <button 
-                            onClick={handlePrevious} 
-                            disabled={currentStep === 0} 
-                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}
-                        >
+                        <button onClick={handlePrevious} disabled={currentStep === 0} className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}>
                             이전
                         </button>
 
@@ -481,7 +463,7 @@ export default function PortfolioForm() {
                         }}
                         className="text-gray-600 hover:text-black transition-all"
                     >
-                        ← 포트폴리오 리스트로 돌아가기
+                        포트폴리오 리스트로 돌아가기
                     </button>
                 </div>
             </div>

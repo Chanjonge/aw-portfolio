@@ -137,7 +137,7 @@ export default function Home() {
                 {!user && (
                     <div className="text-center mt-16 pt-8 border-t border-gray-200">
                         <Link href="/admin/login" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                            관리자 로그인 →
+                            관리자 로그인
                         </Link>
                     </div>
                 )}

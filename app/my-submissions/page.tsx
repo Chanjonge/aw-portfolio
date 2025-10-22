@@ -197,9 +197,9 @@ export default function MySubmissionsPage() {
                 )}
 
                 {/* Info Box */}
-                <div className="mt-8 p-6 bg-blue-50 border-2 border-blue-500 rounded-lg">
-                    <h4 className="font-bold text-blue-900 mb-2">💡 안내</h4>
-                    <ul className="text-blue-800 text-sm space-y-1">
+                <div className="mt-8 p-6 border-2 rounded-lg">
+                    <h4 className="font-bold mb-2">💡 안내</h4>
+                    <ul className="text-sm space-y-1">
                         <li>• 포트폴리오 제출 시 입력한 상호명과 비밀번호를 입력하세요</li>
                         <li>• 임시저장된 제출물은 "이어서 작성"으로 계속 작성할 수 있습니다</li>
                         <li>• 제출 완료된 내용도 언제든지 수정할 수 있습니다</li>
