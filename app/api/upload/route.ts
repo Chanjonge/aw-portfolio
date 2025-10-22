@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
 
         // 파일 타입 확인 (이미지 및 PDF 허용)
         const allowedTypes = ['image/', 'application/pdf'];
-        const isAllowedType = allowedTypes.some(type => file.type.startsWith(type) || file.type === 'application/pdf');
-        
+        const isAllowedType = allowedTypes.some((type) => file.type.startsWith(type) || file.type === 'application/pdf');
+
         if (!isAllowedType) {
             return NextResponse.json({ error: '이미지 또는 PDF 파일만 업로드 가능합니다.' }, { status: 400 });
         }
@@ -48,9 +48,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ url: blob.url }, { status: 200 });
     } catch (error) {
         console.error('❌ Upload error:', error);
-        return NextResponse.json({ 
-            error: '파일 업로드에 실패했습니다.',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                error: '파일 업로드에 실패했습니다.',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            },
+            { status: 500 }
+        );
     }
 }

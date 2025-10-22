@@ -35,7 +35,16 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     const [repeatableItems, setRepeatableItems] = useState<any[]>([{}]);
     const [uploading, setUploading] = useState(false);
 
-    const parsedOptions = question.options ? JSON.parse(question.options) : null;
+    // 기본값 설정
+    const questionType = question.questionType || 'text';
+    const parsedOptions = question.options ? (() => {
+        try {
+            return JSON.parse(question.options);
+        } catch (e) {
+            console.error('Failed to parse options:', e);
+            return null;
+        }
+    })() : null;
 
     // 파일 업로드 핸들러
     const handleFileUpload = async (file: File): Promise<string | null> => {
@@ -68,7 +77,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     };
 
     // 텍스트 입력
-    if (question.questionType === 'text') {
+    if (questionType === 'text') {
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
@@ -97,7 +106,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     }
 
     // 텍스트 영역
-    if (question.questionType === 'textarea') {
+    if (questionType === 'textarea') {
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
@@ -126,7 +135,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     }
 
     // 파일 업로드
-    if (question.questionType === 'file') {
+    if (questionType === 'file') {
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
@@ -157,14 +166,18 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 {uploading && <p className="text-sm text-blue-600">⏳ 업로드 중...</p>}
-                {value && !uploading && <p className="text-sm text-green-600">✅ 파일 업로드 완료: {value.split('/').pop()}</p>}
+                {value && !uploading && (
+                    <p className="text-sm text-green-600">
+                        ✅ 파일 업로드 완료: {typeof value === 'string' ? value.split('/').pop() : value}
+                    </p>
+                )}
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
         );
     }
 
     // 체크박스 (조건부 입력 필드)
-    if (question.questionType === 'checkbox' && parsedOptions?.checkboxes) {
+    if (questionType === 'checkbox' && parsedOptions?.checkboxes) {
         const currentValue = value || { checked: [], inputs: {} };
 
         return (
@@ -232,7 +245,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     }
 
     // 반복 가능한 필드 (추가/삭제 가능)
-    if (question.questionType === 'repeatable' && parsedOptions?.fields) {
+    if (questionType === 'repeatable' && parsedOptions?.fields) {
         const currentValue = value || [];
 
         return (
@@ -309,7 +322,11 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                                                 }}
                                                 className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
-                                            {item[field.label] && field.type === 'file' && <p className="text-sm text-green-600 mt-1">✅ 파일: {item[field.label].split('/').pop()}</p>}
+                                            {item[field.label] && field.type === 'file' && (
+                                                <p className="text-sm text-green-600 mt-1">
+                                                    ✅ 파일: {typeof item[field.label] === 'string' ? item[field.label].split('/').pop() : item[field.label]}
+                                                </p>
+                                            )}
                                         </>
                                     )}
                                 </div>
