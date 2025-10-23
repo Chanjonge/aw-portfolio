@@ -26,7 +26,7 @@ export default function MultiStepForm() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    const maxStep = Math.max(...questions.map((q) => q.step), 5);
+    const maxStep = questions.length > 0 ? Math.max(...questions.map((q) => q.step)) : 1;
 
     useEffect(() => {
         fetchQuestions();

@@ -1392,7 +1392,7 @@ export default function SuperAdminPage() {
 
             {/* Categories Tab */}
             {activeTab === 'categories' && (
-                <div>
+                <div className="max-w-7xl mx-auto">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold">카테고리 관리</h2>
                         <button
