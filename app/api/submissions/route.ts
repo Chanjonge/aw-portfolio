@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
         const portfolioId = searchParams.get('portfolioId');
 
         // try-catch로 안전하게 처리
-        let submissions = [];
+        let submissions: any[] = [];
 
         try {
             // 먼저 모든 데이터를 가져와 보기
