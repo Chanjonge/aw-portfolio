@@ -459,7 +459,7 @@ export default function PortfolioForm() {
                             </div>
 
                             {/* Questions - 스크롤 가능 영역 */}
-                            <div className="max-h-[500px] overflow-y-auto pr-2 space-y-8">
+                            <div className="pr-2 space-y-8">
                                 {currentQuestions.length === 0 ? (
                                     <div className="text-center py-8 text-gray-500">이 단계에는 질문이 없습니다.</div>
                                 ) : (
