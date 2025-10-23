@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -18,15 +18,71 @@ interface Submission {
     };
 }
 
+/* ---------- LS 유틸 (JSON 안전) ---------- */
+const LS = {
+    get<T>(key: string, fallback: T): T {
+        try {
+            const v = window.localStorage.getItem(key);
+            return v == null ? fallback : (JSON.parse(v) as T);
+        } catch {
+            return fallback;
+        }
+    },
+    set(key: string, value: unknown) {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(value));
+        } catch {}
+    },
+    remove(key: string) {
+        try {
+            window.localStorage.removeItem(key);
+        } catch {}
+    },
+};
+
+/* ---------- 키 네이밍 ---------- */
+const LAST_COMPANY_KEY = 'sc:lastCompanyName'; // 마지막 조회 회사명
+const keyOf = {
+    submissions: (company: string) => `sc:submissions:${company || 'anonymous'}`,
+    searched: (company: string) => `sc:searched:${company || 'anonymous'}`,
+};
+
 export default function MySubmissionsPage() {
     const router = useRouter();
-    const [companyName, setCompanyName] = useState('');
-    const [password, setPassword] = useState('');
+
+    // 초기 회사명: 마지막에 사용한 회사명 복원
+    const [companyName, setCompanyName] = useState<string>(() => {
+        if (typeof window === 'undefined') return '';
+        return LS.get<string>(LAST_COMPANY_KEY, '');
+    });
+
+    const [password, setPassword] = useState(''); // 보안상 저장하지 않음
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // 회사명별 LS 키
+    const submissionsKey = useMemo(() => keyOf.submissions(companyName.trim()), [companyName]);
+    const searchedKey = useMemo(() => keyOf.searched(companyName.trim()), [companyName]);
+
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [searched, setSearched] = useState(false);
 
+    /* ---------- 회사명 변경 시: 로컬 캐시 복구 ---------- */
+    useEffect(() => {
+        // 마지막 회사명 기억 (UX)
+        if (companyName.trim()) LS.set(LAST_COMPANY_KEY, companyName.trim());
+
+        // 해당 회사명으로 저장된 캐시 복원
+        if (typeof window !== 'undefined') {
+            const cachedSubs = LS.get<Submission[]>(submissionsKey, []);
+            const cachedSearched = LS.get<boolean>(searchedKey, false);
+            setSubmissions(cachedSubs);
+            setSearched(cachedSearched);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [companyName]); // key는 메모이제이션됨
+
+    /* ---------- 조회 핸들러 (결과를 LS+state 동시 반영) ---------- */
     const handleSearch = async () => {
         setError('');
 
@@ -34,7 +90,6 @@ export default function MySubmissionsPage() {
             setError('상호명을 입력해주세요.');
             return;
         }
-
         if (password.length !== 4 || !/^\d{4}$/.test(password)) {
             setError('4자리 숫자 비밀번호를 입력해주세요.');
             return;
@@ -45,20 +100,30 @@ export default function MySubmissionsPage() {
             const response = await fetch('/api/submissions/my-list', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ companyName, password }),
+                body: JSON.stringify({ companyName: companyName.trim(), password }),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                setSubmissions(data.submissions || []);
+                const list: Submission[] = data.submissions || [];
+
+                // state 반영
+                setSubmissions(list);
                 setSearched(true);
 
-                if (data.submissions.length === 0) {
+                // ✅ localStorage에도 저장
+                LS.set(submissionsKey, list);
+                LS.set(searchedKey, true);
+
+                if (list.length === 0) {
                     setError('제출 내역이 없습니다.');
                 }
             } else {
                 const data = await response.json();
                 setError(data.error || '조회 중 오류가 발생했습니다.');
+                // 실패 시에도 searched 상태는 사용자 의도상 true로 남겨 둘 수 있음 (원래 로직 유지)
+                setSearched(true);
+                LS.set(searchedKey, true);
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -72,6 +137,14 @@ export default function MySubmissionsPage() {
         router.push(`/portfolio/${submission.portfolio.slug}`);
     };
 
+    // 디버깅/문제해결용: 현재 회사명의 캐시 삭제 (선택)
+    const clearCurrentCache = () => {
+        LS.remove(submissionsKey);
+        LS.remove(searchedKey);
+        setSubmissions([]);
+        setSearched(false);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -81,9 +154,14 @@ export default function MySubmissionsPage() {
                         <Link href="/" className="text-2xl font-bold text-black hover:text-gray-700">
                             포트폴리오 시스템
                         </Link>
-                        <Link href="/" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
-                            홈으로
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <button onClick={clearCurrentCache} className="px-3 py-2 text-sm border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all" title="현재 회사명 캐시 초기화">
+                                캐시 초기화
+                            </button>
+                            <Link href="/" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
+                                홈으로
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -108,7 +186,7 @@ export default function MySubmissionsPage() {
                                 onChange={(e) => setCompanyName(e.target.value)}
                                 placeholder="제출 시 입력한 상호명"
                                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all"
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                             />
                         </div>
 
@@ -123,7 +201,7 @@ export default function MySubmissionsPage() {
                                 placeholder="숫자 4자리"
                                 maxLength={4}
                                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all"
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                             />
                             <p className="text-sm text-gray-500 mt-1">제출 시 입력한 4자리 숫자</p>
                         </div>
@@ -195,6 +273,9 @@ export default function MySubmissionsPage() {
                         </div>
                     </div>
                 )}
+
+                {/* 조회했지만 결과가 없을 때 */}
+                {searched && submissions.length === 0 && <p className="text-gray-600">제출 내역이 없습니다.</p>}
 
                 {/* Info Box */}
                 <div className="mt-8 p-6 border-2 rounded-lg">

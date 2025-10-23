@@ -39,20 +39,25 @@ interface Portfolio {
 
 export default function Home() {
     const router = useRouter();
+
+    // 일반 상태
     const [user, setUser] = useState<User | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // 사용자 인증 상태
+    // 인증 상태
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [companyName, setCompanyName] = useState('');
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState('');
 
+    /* -------------------------------------------
+     * 초기 로드 시 localStorage 데이터 복원
+     * ------------------------------------------- */
     useEffect(() => {
-        // Check if user is logged in
+        // 사용자 로그인 상태 복원
         const userStr = localStorage.getItem('user');
         if (userStr) {
             try {
@@ -63,24 +68,36 @@ export default function Home() {
             }
         }
 
-        // Check if user session exists
-        const sessionCompany = sessionStorage.getItem('companyName');
-        const sessionPassword = sessionStorage.getItem('password');
-        if (sessionCompany && sessionPassword) {
-            setCompanyName(sessionCompany);
-            setPassword(sessionPassword);
-            setIsAuthenticated(true);
+        // ✅ 로컬 인증 데이터 복원
+        const savedAuth = localStorage.getItem('portfolio_auth');
+        if (savedAuth) {
+            try {
+                const parsed = JSON.parse(savedAuth);
+                if (parsed.companyName && parsed.password) {
+                    setCompanyName(parsed.companyName);
+                    setPassword(parsed.password);
+                    setIsAuthenticated(true);
+                }
+            } catch (err) {
+                console.error('Failed to parse saved auth:', err);
+            }
         }
 
-        // Fetch categories and portfolios
+        // Fetch 초기 데이터
         fetchCategories();
         fetchPortfolios();
     }, []);
 
+    /* -------------------------------------------
+     * 카테고리 변경 시 포트폴리오 새로 불러오기
+     * ------------------------------------------- */
     useEffect(() => {
         fetchPortfolios();
     }, [selectedCategory]);
 
+    /* -------------------------------------------
+     * API 요청
+     * ------------------------------------------- */
     const fetchCategories = async () => {
         try {
             const response = await fetch('/api/categories');
@@ -108,12 +125,18 @@ export default function Home() {
         }
     };
 
+    /* -------------------------------------------
+     * 로그아웃 (사용자 계정)
+     * ------------------------------------------- */
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
     };
 
+    /* -------------------------------------------
+     * 인증 처리 (상호명 + 비밀번호)
+     * ------------------------------------------- */
     const handleAuth = () => {
         setAuthError('');
 
@@ -127,15 +150,17 @@ export default function Home() {
             return;
         }
 
-        // 세션에 저장
-        sessionStorage.setItem('companyName', companyName);
-        sessionStorage.setItem('password', password);
+        // ✅ localStorage에 저장 (세션이 아니라 영구 저장)
+        localStorage.setItem('portfolio_auth', JSON.stringify({ companyName: companyName.trim(), password }));
+
         setIsAuthenticated(true);
     };
 
+    /* -------------------------------------------
+     * 인증 초기화 (다른 정보로 변경)
+     * ------------------------------------------- */
     const handleClearAuth = () => {
-        sessionStorage.removeItem('companyName');
-        sessionStorage.removeItem('password');
+        localStorage.removeItem('portfolio_auth');
         setCompanyName('');
         setPassword('');
         setIsAuthenticated(false);
@@ -192,7 +217,7 @@ export default function Home() {
                                 <label className="block text-sm font-bold text-gray-700 mb-2">
                                     상호명 <span className="text-red-500">*</span>
                                 </label>
-                                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="회사명 또는 이름을 입력하세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+                                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="상호명 또는 이름을 입력하세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" />
                             </div>
 
                             <div>

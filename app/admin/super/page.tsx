@@ -604,7 +604,7 @@ export default function SuperAdminPage() {
                         <button onClick={() => setActiveTab('users')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'users' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
                             사용자 관리
                         </button>
-                        <button
+                        {/* <button
                             onClick={() => {
                                 setActiveTab('submissions');
                                 fetchSubmissions();
@@ -612,7 +612,7 @@ export default function SuperAdminPage() {
                             className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
                         >
                             제출 목록
-                        </button>
+                        </button> */}
                         <button
                             onClick={() => {
                                 setActiveTab('categories');
