@@ -45,6 +45,12 @@ export default function Home() {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // 사용자 인증 상태
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [companyName, setCompanyName] = useState('');
+    const [password, setPassword] = useState('');
+    const [authError, setAuthError] = useState('');
+
     useEffect(() => {
         // Check if user is logged in
         const userStr = localStorage.getItem('user');
@@ -55,6 +61,15 @@ export default function Home() {
             } catch (error) {
                 console.error('Failed to parse user data:', error);
             }
+        }
+
+        // Check if user session exists
+        const sessionCompany = sessionStorage.getItem('companyName');
+        const sessionPassword = sessionStorage.getItem('password');
+        if (sessionCompany && sessionPassword) {
+            setCompanyName(sessionCompany);
+            setPassword(sessionPassword);
+            setIsAuthenticated(true);
         }
 
         // Fetch categories and portfolios
@@ -99,6 +114,34 @@ export default function Home() {
         setUser(null);
     };
 
+    const handleAuth = () => {
+        setAuthError('');
+
+        if (!companyName.trim()) {
+            setAuthError('상호명을 입력해주세요.');
+            return;
+        }
+
+        if (password.length !== 4 || !/^\d{4}$/.test(password)) {
+            setAuthError('4자리 숫자 비밀번호를 입력해주세요.');
+            return;
+        }
+
+        // 세션에 저장
+        sessionStorage.setItem('companyName', companyName);
+        sessionStorage.setItem('password', password);
+        setIsAuthenticated(true);
+    };
+
+    const handleClearAuth = () => {
+        sessionStorage.removeItem('companyName');
+        sessionStorage.removeItem('password');
+        setCompanyName('');
+        setPassword('');
+        setIsAuthenticated(false);
+        setAuthError('');
+    };
+
     return (
         <div className="min-h-screen bg-white">
             {/* Header */}
@@ -135,8 +178,64 @@ export default function Home() {
                     {/* <p className="text-xl text-gray-600">원하시는 타입을 선택하여 양식을 작성해주세요</p> */}
                 </div>
 
-                {/* Category Filter */}
-                {categories.length > 0 && (
+                {/* 사용자 인증 섹션 */}
+                {!isAuthenticated ? (
+                    <div className="max-w-md mx-auto mb-12 bg-white border-2 border-black rounded-lg p-8 shadow-lg">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold text-black mb-2">제출자 정보 입력</h3>
+                            <p className="text-gray-600">상호명과 4자리 비밀번호를 입력하세요</p>
+                            <p className="text-sm text-gray-500 mt-2">한 번 입력하면 모든 타입에서 자동으로 사용됩니다</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">
+                                    상호명 <span className="text-red-500">*</span>
+                                </label>
+                                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="회사명 또는 이름을 입력하세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">
+                                    4자리 비밀번호 <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+                                    placeholder="숫자 4자리"
+                                    maxLength={4}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                                />
+                                <p className="text-sm text-gray-500 mt-1">숫자 4자리만 입력 가능합니다</p>
+                            </div>
+
+                            {authError && (
+                                <div className="p-4 bg-red-50 border-2 border-red-500 rounded-lg">
+                                    <p className="text-sm text-red-700">{authError}</p>
+                                </div>
+                            )}
+
+                            <button onClick={handleAuth} className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="max-w-md mx-auto mb-12 bg-green-50 border-2 border-green-500 rounded-lg p-6">
+                        <div className="text-center">
+                            <div className="text-green-600 mb-2">✅ 인증 완료</div>
+                            <div className="font-semibold text-black mb-2">상호명: {companyName}</div>
+                            <div className="text-sm text-gray-600 mb-4">이제 원하는 타입을 선택하세요</div>
+                            <button onClick={handleClearAuth} className="text-sm text-gray-500 hover:text-gray-700 underline">
+                                다른 정보로 변경
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Category Filter - 인증된 사용자에게만 표시 */}
+                {isAuthenticated && categories.length > 0 && (
                     <div className="mb-8">
                         <div className="flex justify-center gap-3 flex-wrap">
                             <button onClick={() => setSelectedCategory(null)} className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedCategory === null ? 'bg-black text-white' : 'bg-white text-black border-2 border-gray-300 hover:border-black'}`}>
@@ -152,35 +251,37 @@ export default function Home() {
                     </div>
                 )}
 
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="text-xl text-gray-600">로딩 중...</div>
-                    </div>
-                ) : portfolios.length === 0 ? (
-                    <div className="text-center py-12">
-                        <div className="text-xl text-gray-600">아직 활성화된 타입이 없습니다.</div>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {portfolios.map((portfolio) => (
-                            <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="block border-1 border-black transition-all overflow-hidden group">
-                                {portfolio.thumbnail && (
-                                    <div className="portfolio-list w-full h-48 h-50 bg-gray-200 overflow-hidden">
-                                        <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                {/* 포트폴리오 목록 - 인증된 사용자에게만 표시 */}
+                {isAuthenticated &&
+                    (loading ? (
+                        <div className="text-center py-12">
+                            <div className="text-xl text-gray-600">로딩 중...</div>
+                        </div>
+                    ) : portfolios.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="text-xl text-gray-600">아직 활성화된 타입이 없습니다.</div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {portfolios.map((portfolio) => (
+                                <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="block border-1 border-black transition-all overflow-hidden group">
+                                    {portfolio.thumbnail && (
+                                        <div className="portfolio-list w-full h-48 h-50 bg-gray-200 overflow-hidden">
+                                            <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                        </div>
+                                    )}
+                                    <div className="p-6">
+                                        <h3 className="text-2xl font-bold mb-3 group-hover:text-gray-700">{portfolio.title}</h3>
+                                        {portfolio.description && <p className="text-gray-600 mb-4">{portfolio.description}</p>}
+                                        {/* <div className="flex gap-4 text-sm">
+                                            <span className="text-gray-500">📝 {portfolio._count.questions}개 질문</span>
+                                            <span className="text-gray-500">✅ {portfolio._count.submissions}개 제출</span>
+                                        </div> */}
                                     </div>
-                                )}
-                                <div className="p-6">
-                                    <h3 className="text-2xl font-bold mb-3 group-hover:text-gray-700">{portfolio.title}</h3>
-                                    {portfolio.description && <p className="text-gray-600 mb-4">{portfolio.description}</p>}
-                                    {/* <div className="flex gap-4 text-sm">
-                                        <span className="text-gray-500">📝 {portfolio._count.questions}개 질문</span>
-                                        <span className="text-gray-500">✅ {portfolio._count.submissions}개 제출</span>
-                                    </div> */}
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                )}
+                                </Link>
+                            ))}
+                        </div>
+                    ))}
 
                 {/* Admin Login Link at Bottom */}
                 {!user && (

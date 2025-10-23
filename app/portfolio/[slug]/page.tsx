@@ -63,6 +63,19 @@ export default function PortfolioForm() {
                 console.error('Failed to parse user data:', error);
             }
         }
+
+        // 세션에서 인증 정보 가져오기
+        const sessionCompany = sessionStorage.getItem('companyName');
+        const sessionPassword = sessionStorage.getItem('password');
+        if (sessionCompany && sessionPassword) {
+            setCompanyName(sessionCompany);
+            setPassword(sessionPassword);
+            // 자동으로 기존 제출 내역 확인 후 다음 단계로 이동
+            setTimeout(() => {
+                checkExistingSubmission(sessionCompany, sessionPassword);
+            }, 1000);
+        }
+
         fetchPortfolioAndQuestions();
     }, [slug]);
 
@@ -90,6 +103,41 @@ export default function PortfolioForm() {
             document.removeEventListener('keydown', handleKeyPress);
         };
     }, [currentStep, maxStep, submitting]);
+
+    const checkExistingSubmission = async (company: string, pass: string) => {
+        if (!portfolio) return;
+
+        try {
+            const response = await fetch(`/api/submissions/check`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    portfolioId: portfolio.id,
+                    companyName: company,
+                    password: pass,
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.submission) {
+                    // 기존 제출 내역이 있으면 불러오기
+                    setExistingSubmissionId(data.submission.id);
+                    setFormData(data.submission.responses);
+                    setCurrentStep(1);
+                    alert('기존 작성 내역을 불러왔습니다.');
+                } else {
+                    // 기존 제출 내역이 없으면 새로 시작
+                    setCurrentStep(1);
+                }
+            } else {
+                setCurrentStep(1);
+            }
+        } catch (error) {
+            console.error('Failed to check existing submission:', error);
+            setCurrentStep(1);
+        }
+    };
 
     const fetchPortfolioAndQuestions = async () => {
         try {
@@ -460,8 +508,8 @@ export default function PortfolioForm() {
 
                 {/* Form Card */}
                 <div className="bg-white border-2 border-black rounded-lg p-8 shadow-lg">
-                    {/* Step 0: 인증 단계 */}
-                    {currentStep === 0 ? (
+                    {/* Step 0: 인증 단계 - 세션에 정보가 없을 때만 표시 */}
+                    {currentStep === 0 && !sessionStorage.getItem('companyName') ? (
                         <div>
                             <div className="mb-8 text-center">
                                 <h2 className="text-2xl font-bold text-black mb-2">제출자 정보 입력</h2>
@@ -499,7 +547,7 @@ export default function PortfolioForm() {
                                 )}
                             </div>
                         </div>
-                    ) : (
+                    ) : (currentStep > 0 && currentStep <= maxStep) || (currentStep === 0 && sessionStorage.getItem('companyName')) ? (
                         /* Step 1+: 질문 단계 */
                         <div>
                             <div className="mb-6">
@@ -516,11 +564,17 @@ export default function PortfolioForm() {
                                 )}
                             </div>
                         </div>
-                    )}
+                    ) : null}
 
                     {/* Navigation Buttons */}
                     <div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
-                        <button onClick={handlePrevious} disabled={currentStep === 0} className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}>
+                        <button
+                            onClick={handlePrevious}
+                            disabled={currentStep === 0 || (currentStep === 1 && sessionStorage.getItem('companyName'))}
+                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                                currentStep === 0 || (currentStep === 1 && sessionStorage.getItem('companyName')) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'
+                            }`}
+                        >
                             이전
                         </button>
 
