@@ -218,7 +218,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                         const isChecked = isMultiple ? currentValue.checked?.includes(option.label) : currentValue.selected === option.label;
 
                         return (
-                            <div key={idx} className={`rounded-lg p-4 transition-all ${isChecked ? 'border-black bg-gray-50' : 'border-gray-200'}`}>
+                            <div key={idx} className={`rounded-lg p-4 transition-all ${isChecked ? 'border-black' : 'border-gray-200'}`}>
                                 <label className="flex items-start gap-3 cursor-pointer">
                                     <input
                                         type={isMultiple ? 'checkbox' : 'radio'}
@@ -302,7 +302,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                     {currentValue.map((item: any, itemIdx: number) => (
                         <div key={itemIdx} className="border-gray-300 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between items-center mb-3">
-                                {/* <span className="font-semibold text-gray-700">항목 {itemIdx + 1}</span> */}
+                                <span className="font-semibold text-gray-700">항목 {itemIdx + 1}</span>
                                 {currentValue.length > 1 && (
                                     <button
                                         type="button"
