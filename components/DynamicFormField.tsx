@@ -165,7 +165,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                             }
                         }
                     }}
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 {uploading && <p className="text-sm text-blue-600">⏳ 업로드 중...</p>}
                 {value && !uploading && <p className="text-sm text-green-600">✅ 파일 업로드 완료: {typeof value === 'string' ? value.split('/').pop() : value}</p>}
@@ -218,7 +218,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                         const isChecked = isMultiple ? currentValue.checked?.includes(option.label) : currentValue.selected === option.label;
 
                         return (
-                            <div key={idx} className={`border-2 rounded-lg p-4 transition-all ${isChecked ? 'border-black bg-gray-50' : 'border-gray-200'}`}>
+                            <div key={idx} className={`rounded-lg p-4 transition-all ${isChecked ? 'border-black bg-gray-50' : 'border-gray-200'}`}>
                                 <label className="flex items-start gap-3 cursor-pointer">
                                     <input
                                         type={isMultiple ? 'checkbox' : 'radio'}
