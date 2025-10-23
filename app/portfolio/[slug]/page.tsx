@@ -509,7 +509,7 @@ export default function PortfolioForm() {
                 {/* Form Card */}
                 <div className="bg-white border-2 border-black rounded-lg p-8 shadow-lg">
                     {/* Step 0: 인증 단계 - 세션에 정보가 없을 때만 표시 */}
-                    {currentStep === 0 && !sessionStorage.getItem('companyName') ? (
+                    {currentStep === 0 && (typeof window === 'undefined' || !sessionStorage.getItem('companyName')) ? (
                         <div>
                             <div className="mb-8 text-center">
                                 <h2 className="text-2xl font-bold text-black mb-2">제출자 정보 입력</h2>
@@ -547,7 +547,7 @@ export default function PortfolioForm() {
                                 )}
                             </div>
                         </div>
-                    ) : (currentStep > 0 && currentStep <= maxStep) || (currentStep === 0 && !!sessionStorage.getItem('companyName')) ? (
+                    ) : (currentStep > 0 && currentStep <= maxStep) || (currentStep === 0 && typeof window !== 'undefined' && !!sessionStorage.getItem('companyName')) ? (
                         /* Step 1+: 질문 단계 */
                         <div>
                             <div className="mb-6">
@@ -570,9 +570,9 @@ export default function PortfolioForm() {
                     <div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
                         <button
                             onClick={handlePrevious}
-                            disabled={currentStep === 0 || (currentStep === 1 && !!sessionStorage.getItem('companyName'))}
+                            disabled={currentStep === 0 || (currentStep === 1 && typeof window !== 'undefined' && !!sessionStorage.getItem('companyName'))}
                             className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                                currentStep === 0 || (currentStep === 1 && !!sessionStorage.getItem('companyName')) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'
+                                currentStep === 0 || (currentStep === 1 && typeof window !== 'undefined' && !!sessionStorage.getItem('companyName')) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'
                             }`}
                         >
                             이전
