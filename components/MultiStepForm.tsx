@@ -32,6 +32,31 @@ export default function MultiStepForm() {
         fetchQuestions();
     }, []);
 
+    // Enter 키 이벤트 리스너
+    useEffect(() => {
+        const handleKeyPress = (event: KeyboardEvent) => {
+            if (event.key === 'Enter' && !event.shiftKey && !submitting) {
+                // textarea나 input에서 Shift+Enter는 줄바꿈이므로 제외
+                const target = event.target as HTMLElement;
+                if (target.tagName === 'TEXTAREA' && !event.ctrlKey) {
+                    return; // textarea에서는 Ctrl+Enter만 다음 단계로
+                }
+
+                event.preventDefault();
+                if (currentStep < maxStep) {
+                    handleNext();
+                } else {
+                    handleSubmit();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyPress);
+        return () => {
+            document.removeEventListener('keydown', handleKeyPress);
+        };
+    }, [currentStep, maxStep, submitting]);
+
     const fetchQuestions = async () => {
         try {
             const response = await fetch('/api/questions');

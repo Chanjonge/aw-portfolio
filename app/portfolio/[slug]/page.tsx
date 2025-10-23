@@ -50,7 +50,7 @@ export default function PortfolioForm() {
     const [authError, setAuthError] = useState('');
     const [existingSubmissionId, setExistingSubmissionId] = useState<string | null>(null);
 
-    const maxStep = Math.max(...questions.map((q) => q.step), 5);
+    const maxStep = questions.length > 0 ? Math.max(...questions.map((q) => q.step)) : 1;
 
     useEffect(() => {
         // Check user role
@@ -65,6 +65,31 @@ export default function PortfolioForm() {
         }
         fetchPortfolioAndQuestions();
     }, [slug]);
+
+    // Enter 키 이벤트 리스너
+    useEffect(() => {
+        const handleKeyPress = (event: KeyboardEvent) => {
+            if (event.key === 'Enter' && !event.shiftKey && !submitting) {
+                // textarea나 input에서 Shift+Enter는 줄바꿈이므로 제외
+                const target = event.target as HTMLElement;
+                if (target.tagName === 'TEXTAREA' && !event.ctrlKey) {
+                    return; // textarea에서는 Ctrl+Enter만 다음 단계로
+                }
+
+                event.preventDefault();
+                if (currentStep === 0 || currentStep < maxStep) {
+                    handleNext();
+                } else {
+                    handleSubmit();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyPress);
+        return () => {
+            document.removeEventListener('keydown', handleKeyPress);
+        };
+    }, [currentStep, maxStep, submitting]);
 
     const fetchPortfolioAndQuestions = async () => {
         try {

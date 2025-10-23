@@ -36,7 +36,10 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        const parsedSubmissions = submissions.map((sub) => ({
+        // null companyName 필터링을 JavaScript에서 처리
+        const validSubmissions = submissions.filter((sub) => sub.companyName != null && sub.companyName !== '');
+
+        const parsedSubmissions = validSubmissions.map((sub) => ({
             ...sub,
             responses: JSON.parse(sub.responses),
         }));
