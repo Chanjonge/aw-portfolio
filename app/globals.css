@@ -42,3 +42,11 @@ a {
 .portfolio-list {
     border-radius: 1rem;
 }
+
+.mb-18 {
+    margin-bottom: 8rem;
+}
+
+.border-bottom {
+    border-bottom-width: 1px;
+}
