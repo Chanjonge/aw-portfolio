@@ -7,7 +7,7 @@ import Link from 'next/link';
 interface Member {
     id: string;
     companyName: string;
-    password: string; // 해시된 비밀번호
+    password: string; // 평문 비밀번호 (식별번호)
     lastLoginAt: string | null; // null일 수 있음
     createdAt: string;
     updatedAt: string;
@@ -220,7 +220,7 @@ export default function MembersPage() {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상호명</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">비밀번호 (해시)</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">비밀번호</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">가입일</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">마지막 로그인</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">로그인 횟수</th>
@@ -235,7 +235,7 @@ export default function MembersPage() {
                                                 <div className="text-sm font-medium text-gray-900">{member.companyName}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-xs font-mono text-gray-500 max-w-xs truncate">{member.password}</div>
+                                                <div className="text-sm font-medium text-gray-900">{member.password}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(member.createdAt)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(member.lastLoginAt)}</td>
@@ -288,8 +288,8 @@ export default function MembersPage() {
                                     <p className="mt-1 text-sm text-gray-900">{selectedMember.ipAddress || 'N/A'}</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">비밀번호 해시</label>
-                                    <p className="mt-1 text-xs font-mono text-gray-500 break-all">{selectedMember.password}</p>
+                                    <label className="block text-sm font-medium text-gray-700">비밀번호</label>
+                                    <p className="mt-1 text-sm text-gray-900">{selectedMember.password}</p>
                                 </div>
                             </div>
                             <div className="flex justify-end mt-6">

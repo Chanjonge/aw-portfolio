@@ -53,9 +53,7 @@ export async function POST(request: NextRequest) {
 
         if (existingMember) {
             // 기존 회원 - 비밀번호 확인
-            const isValidPassword = await bcrypt.compare(password, existingMember.password);
-
-            if (!isValidPassword) {
+            if (existingMember.password !== password) {
                 return NextResponse.json({ error: '비밀번호가 일치하지 않습니다.' }, { status: 401 });
             }
 
@@ -74,13 +72,11 @@ export async function POST(request: NextRequest) {
                 message: '로그인 성공',
             });
         } else {
-            // 신규 회원 - 회원가입
-            const hashedPassword = await bcrypt.hash(password, 10);
-
+            // 신규 회원 - 회원가입 (평문 비밀번호 저장)
             const newMember = await prisma.member.create({
                 data: {
                     companyName,
-                    password: hashedPassword,
+                    password: password, // 평문으로 저장
                     lastLoginAt: new Date(), // 신규 회원도 로그인 시간 설정
                     ipAddress,
                 },
