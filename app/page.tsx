@@ -146,7 +146,7 @@ export default function Home() {
         }
 
         if (password.length !== 4 || !/^\d{4}$/.test(password)) {
-            setAuthError('4자리 숫자 비밀번호를 입력해주세요.');
+            setAuthError('비밀번호 4자리를 입력해주세요.');
             return;
         }
 
@@ -173,8 +173,20 @@ export default function Home() {
             <header className="bg-white border-b-2 border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-2xl font-bold text-black">포트폴리오 리스트</h1>
+                        <h1 className="text-2xl font-bold text-black">
+                            <img src="/logo.png" alt="로고" className="h-8" />
+                        </h1>
                         <div className="flex items-center gap-4">
+                            {/* 상호명 정보 - 인증된 사용자에게만 표시 */}
+                            {isAuthenticated && companyName && (
+                                <div className="flex items-center gap-2 mr-4">
+                                    <span className="font-semibold text-black text-sm">상호명: {companyName}</span>
+                                    <button onClick={handleClearAuth} className="text-xs text-gray-500 hover:text-gray-700 underline">
+                                        로그아웃
+                                    </button>
+                                </div>
+                            )}
+
                             {user ? (
                                 <>
                                     <span className="text-gray-600">
@@ -189,7 +201,7 @@ export default function Home() {
                                 </>
                             ) : (
                                 <Link href="/my-submissions" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
-                                    내 제출 내역
+                                    작성 내역 불러오기
                                 </Link>
                             )}
                         </div>
@@ -197,14 +209,14 @@ export default function Home() {
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="text-center mb-12">
-                    <h2 className="text-4xl font-bold text-black mb-4">타입형 리스트</h2>
-                    {/* <p className="text-xl text-gray-600">원하시는 타입을 선택하여 양식을 작성해주세요</p> */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+                <div className="text-center mb-18">
+                    <h2 className="text-4xl text-black mb-4">당신의 감각에 맞는 디자인을 찾아보세요</h2>
+                    <p className="text-xl text-gray-600">언제나 사용할 수 있습니다.</p>
                 </div>
 
                 {/* 사용자 인증 섹션 */}
-                {!isAuthenticated ? (
+                {!isAuthenticated && (
                     <div className="max-w-md mx-auto mb-12 bg-white border-2 border-black rounded-lg p-8 shadow-lg">
                         <div className="text-center mb-6">
                             <h3 className="text-2xl font-bold text-black mb-2">제출자 정보 입력</h3>
@@ -217,12 +229,12 @@ export default function Home() {
                                 <label className="block text-sm font-bold text-gray-700 mb-2">
                                     상호명 <span className="text-red-500">*</span>
                                 </label>
-                                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="상호명 또는 이름을 입력하세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+                                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="상호명을 입력해주세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                                    4자리 비밀번호 <span className="text-red-500">*</span>
+                                    비밀번호 4자리 <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="password"
@@ -246,30 +258,26 @@ export default function Home() {
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <div className="max-w-md mx-auto mb-12 bg-green-50 border-2 border-green-500 rounded-lg p-6">
-                        <div className="text-center">
-                            <div className="text-green-600 mb-2">✅ 인증 완료</div>
-                            <div className="font-semibold text-black mb-2">상호명: {companyName}</div>
-                            <div className="text-sm text-gray-600 mb-4">이제 원하는 타입을 선택하세요</div>
-                            <button onClick={handleClearAuth} className="text-sm text-gray-500 hover:text-gray-700 underline">
-                                다른 정보로 변경
-                            </button>
-                        </div>
-                    </div>
                 )}
 
                 {/* Category Filter - 인증된 사용자에게만 표시 */}
                 {isAuthenticated && categories.length > 0 && (
                     <div className="mb-8">
-                        <div className="flex justify-center gap-3 flex-wrap">
-                            <button onClick={() => setSelectedCategory(null)} className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedCategory === null ? 'bg-black text-white' : 'bg-white text-black border-2 border-gray-300 hover:border-black'}`}>
+                        <div className="flex justify-start gap-3 flex-wrap">
+                            <button onClick={() => setSelectedCategory(null)} className={`px-6 py-1 text-base font-semibold transition-all ${selectedCategory === null ? 'bg-black text-white' : 'bg-white text-black border-bottom border-black hover:border-black hover:bg-black hover:text-white'}`}>
                                 전체
                             </button>
                             {categories.map((category) => (
-                                <button key={category.id} onClick={() => setSelectedCategory(category.id)} className={`px-6 py-3 rounded-lg font-semibold transition-all ${selectedCategory === category.id ? 'bg-black text-white' : 'bg-white text-black border-2 border-gray-300 hover:border-black'}`}>
+                                // <button key={category.id} onClick={() => setSelectedCategory(category.id)} className={`px-6 rounded-lg font-semibold transition-all ${selectedCategory === category.id ? 'bg-black text-white' : 'bg-white text-black border border-black hover:border-black'}`}>
+                                //     {category.name}
+                                //     {category._count && category._count.portfolios > 0 && <span className="ml-2 text-sm opacity-75">({category._count.portfolios})</span>}
+                                // </button>
+                                <button
+                                    key={category.id}
+                                    onClick={() => setSelectedCategory(category.id)}
+                                    className={`px-6 py-1 text-base font-semibold transition-all ${selectedCategory === category.id ? 'bg-black text-white' : 'bg-white text-black border-bottom border-black hover:bg-black hover:text-white'}`}
+                                >
                                     {category.name}
-                                    {category._count && category._count.portfolios > 0 && <span className="ml-2 text-sm opacity-75">({category._count.portfolios})</span>}
                                 </button>
                             ))}
                         </div>
@@ -280,11 +288,11 @@ export default function Home() {
                 {isAuthenticated &&
                     (loading ? (
                         <div className="text-center py-12">
-                            <div className="text-xl text-gray-600">로딩 중...</div>
+                            <div className="text-xl text-gray-600">불러오는 중입니다</div>
                         </div>
                     ) : portfolios.length === 0 ? (
                         <div className="text-center py-12">
-                            <div className="text-xl text-gray-600">아직 활성화된 타입이 없습니다.</div>
+                            <div className="text-xl text-gray-600"> 등록된 타입이 존재하지 않습니다.</div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
