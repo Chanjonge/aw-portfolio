@@ -19,6 +19,17 @@ model User {
   createdBy String?
 }
 
+model Member {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  companyName String    @unique // 상호명 (고유값)
+  password    String    // 4자리 비밀번호 (해시됨)
+  lastLoginAt DateTime? // 마지막 로그인 시간 (선택적)
+  createdAt   DateTime  @default(now()) // 최초 가입 시간
+  updatedAt   DateTime  @updatedAt
+  ipAddress   String?   // 최초 가입 IP
+  loginCount  Int       @default(1) // 로그인 횟수
+}
+
 model Category {
   id         String      @id @default(auto()) @map("_id") @db.ObjectId
   name       String      @unique // Category name

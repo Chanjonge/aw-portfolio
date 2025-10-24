@@ -47,7 +47,7 @@ interface Question {
     options?: string;
 }
 
-type TabType = 'users' | 'portfolios' | 'questions' | 'submissions' | 'categories';
+type TabType = 'users' | 'portfolios' | 'questions' | 'submissions' | 'categories' | 'members';
 
 interface Category {
     id: string;
@@ -621,6 +621,14 @@ export default function SuperAdminPage() {
                             className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'categories' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
                         >
                             카테고리 관리
+                        </button>
+                        <button
+                            onClick={() => {
+                                window.location.href = '/admin/members';
+                            }}
+                            className="py-4 px-2 font-semibold border-b-4 border-transparent text-gray-500 hover:text-black transition-all"
+                        >
+                            회원 관리
                         </button>
                     </div>
                 </div>

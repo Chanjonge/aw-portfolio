@@ -135,9 +135,9 @@ export default function Home() {
     };
 
     /* -------------------------------------------
-     * 인증 처리 (상호명 + 비밀번호)
+     * 인증 처리 (상호명 + 비밀번호) - 회원 시스템 연동
      * ------------------------------------------- */
-    const handleAuth = () => {
+    const handleAuth = async () => {
         setAuthError('');
 
         if (!companyName.trim()) {
@@ -150,10 +150,46 @@ export default function Home() {
             return;
         }
 
-        // ✅ localStorage에 저장 (세션이 아니라 영구 저장)
-        localStorage.setItem('portfolio_auth', JSON.stringify({ companyName: companyName.trim(), password }));
+        try {
+            // 회원 시스템에 로그인/가입 요청
+            const response = await fetch('/api/members', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    companyName: companyName.trim(),
+                    password,
+                }),
+            });
 
-        setIsAuthenticated(true);
+            const data = await response.json();
+
+            if (response.ok) {
+                // ✅ localStorage에 저장 (세션이 아니라 영구 저장)
+                localStorage.setItem(
+                    'portfolio_auth',
+                    JSON.stringify({
+                        companyName: companyName.trim(),
+                        password,
+                        memberId: data.member.id,
+                        isNewMember: data.isNewMember,
+                    })
+                );
+
+                setIsAuthenticated(true);
+
+                // 신규 회원인 경우 알림
+                if (data.isNewMember) {
+                    alert('환영합니다! 새로운 회원으로 등록되었습니다.');
+                }
+            } else {
+                setAuthError(data.error || '인증에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Auth error:', error);
+            setAuthError('인증 처리 중 오류가 발생했습니다.');
+        }
     };
 
     /* -------------------------------------------
@@ -177,8 +213,8 @@ export default function Home() {
                             <img src="/logo.png" alt="로고" className="h-8" />
                         </h1>
                         <div className="flex items-center gap-4">
-                            {/* 상호명 정보 - 인증된 사용자에게만 표시 */}
-                            {isAuthenticated && companyName && (
+                            {/* 상호명 정보 - 인증된 사용자에게만 표시 (관리자가 아닐 때만) */}
+                            {isAuthenticated && companyName && !user && (
                                 <div className="flex items-center gap-2 mr-4">
                                     <span className="font-semibold text-black text-sm">상호명: {companyName}</span>
                                     <button onClick={handleClearAuth} className="text-xs text-gray-500 hover:text-gray-700 underline">
@@ -215,8 +251,8 @@ export default function Home() {
                     <p className="text-xl text-gray-600">언제나 사용할 수 있습니다.</p>
                 </div>
 
-                {/* 사용자 인증 섹션 */}
-                {!isAuthenticated && (
+                {/* 사용자 인증 섹션 - 관리자가 아닐 때만 표시 */}
+                {!isAuthenticated && !user && (
                     <div className="max-w-md mx-auto mb-12 bg-white border-2 border-black rounded-lg p-8 shadow-lg">
                         <div className="text-center mb-6">
                             <h3 className="text-2xl font-bold text-black mb-2">제출자 정보 입력</h3>
@@ -260,8 +296,8 @@ export default function Home() {
                     </div>
                 )}
 
-                {/* Category Filter - 인증된 사용자에게만 표시 */}
-                {isAuthenticated && categories.length > 0 && (
+                {/* Category Filter - 인증된 사용자 또는 관리자에게 표시 */}
+                {(isAuthenticated || user) && categories.length > 0 && (
                     <div className="mb-8">
                         <div className="flex justify-start gap-3 flex-wrap">
                             <button onClick={() => setSelectedCategory(null)} className={`px-6 py-1 text-base font-semibold transition-all ${selectedCategory === null ? 'bg-black text-white' : 'bg-white text-black border-bottom border-black hover:border-black hover:bg-black hover:text-white'}`}>
@@ -284,8 +320,8 @@ export default function Home() {
                     </div>
                 )}
 
-                {/* 포트폴리오 목록 - 인증된 사용자에게만 표시 */}
-                {isAuthenticated &&
+                {/* 포트폴리오 목록 - 인증된 사용자 또는 관리자에게 표시 */}
+                {(isAuthenticated || user) &&
                     (loading ? (
                         <div className="text-center py-12">
                             <div className="text-xl text-gray-600">불러오는 중입니다</div>
