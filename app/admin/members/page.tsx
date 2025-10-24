@@ -133,7 +133,7 @@ export default function MembersPage() {
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <Link href="/admin/super" className="text-2xl font-bold text-black hover:text-gray-700">
-                                관리자 패널
+                                관리자 페이지
                             </Link>
                             <span className="text-gray-400">|</span>
                             <h1 className="text-xl font-semibold text-gray-800">회원 관리</h1>
@@ -158,7 +158,7 @@ export default function MembersPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="flex items-center">
-                            <div className="p-2 bg-blue-100 rounded-lg">
+                            <div className="p-2 rounded-lg">
                                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         strokeLinecap="round"
@@ -177,7 +177,7 @@ export default function MembersPage() {
 
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="flex items-center">
-                            <div className="p-2 bg-green-100 rounded-lg">
+                            <div className="p-2 rounded-lg">
                                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -191,7 +191,7 @@ export default function MembersPage() {
 
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="flex items-center">
-                            <div className="p-2 bg-purple-100 rounded-lg">
+                            <div className="p-2 rounded-lg">
                                 <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                 </svg>
