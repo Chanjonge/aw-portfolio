@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Fancybox } from '@fancyapps/ui';
-import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
 interface User {
     id: string;
@@ -90,13 +88,7 @@ export default function Home() {
         fetchCategories();
         fetchPortfolios();
 
-        // Fancybox 초기화 (기본 설정)
-        Fancybox.bind('[data-fancybox]');
-
-        // 컴포넌트 언마운트 시 Fancybox 정리
-        return () => {
-            Fancybox.destroy();
-        };
+        // 더 이상 Fancybox를 사용하지 않으므로 초기화 코드 제거
     }, []);
 
     /* -------------------------------------------
@@ -360,23 +352,20 @@ export default function Home() {
                                     </div>
                                     {/* 버튼 영역 */}
                                     <div className="flex gap-3 mt-4">
-                                        {/* 미리보기 버튼 - Fancybox */}
+                                        {/* 미리보기 버튼 - 새 창으로 열기 (배포 환경 호환) */}
                                         {portfolio.domain ? (
-                                            <a
-                                                href={portfolio.domain}
-                                                data-fancybox="portfolio"
-                                                data-type="iframe"
-                                                data-preload="false"
-                                                data-width="1200"
-                                                data-height="800"
+                                            <button
+                                                type="button"
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
+                                                    // 새 창에서 미리보기 열기 (배포 환경에서 더 안정적)
+                                                    window.open(portfolio.domain, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes,noopener,noreferrer');
                                                 }}
-                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all inline-block text-center"
+                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all"
                                             >
                                                 미리보기
-                                            </a>
+                                            </button>
                                         ) : (
                                             <button
                                                 type="button"
