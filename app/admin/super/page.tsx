@@ -17,6 +17,7 @@ interface Portfolio {
     description: string;
     slug: string;
     thumbnail?: string;
+    domain?: string; // 미리보기용 도메인 URL
     isActive: boolean;
     order: number;
     categoryId?: string;
@@ -405,6 +406,7 @@ export default function SuperAdminPage() {
                     isActive: true,
                     order: 0,
                     categoryId: '',
+                    domain: '',
                 });
                 await fetchPortfolios();
             } else {
@@ -453,6 +455,7 @@ export default function SuperAdminPage() {
             isActive: portfolio.isActive,
             order: portfolio.order,
             categoryId: portfolio.categoryId || '',
+            domain: portfolio.domain || '',
         });
         setShowPortfolioForm(true);
     };
@@ -652,6 +655,7 @@ export default function SuperAdminPage() {
                                         isActive: true,
                                         order: portfolios.length,
                                         categoryId: '',
+                                        domain: '',
                                     });
                                     setShowPortfolioForm(true);
                                 }}
@@ -877,18 +881,16 @@ export default function SuperAdminPage() {
                                 />
                             </div>
                             {/* 도메인 입력 */}
-<div className="mb-4">
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    도메인 (예: https://example.com)
-  </label>
-  <input
-    type="text"
-    value={portfolioForm.domain}
-    onChange={(e) => setPortfolioForm({ ...portfolioForm, domain: e.target.value })}
-    placeholder="포트폴리오 도메인 URL을 입력하세요"
-    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-  />
-</div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">도메인 (예: https://example.com)</label>
+                                <input
+                                    type="text"
+                                    value={portfolioForm.domain}
+                                    onChange={(e) => setPortfolioForm({ ...portfolioForm, domain: e.target.value })}
+                                    placeholder="포트폴리오 도메인 URL을 입력하세요"
+                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                />
+                            </div>
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">썸네일 이미지 (선택사항)</label>
                                 <input
