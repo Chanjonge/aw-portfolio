@@ -90,23 +90,8 @@ export default function Home() {
         fetchCategories();
         fetchPortfolios();
 
-        // Fancybox 초기화
-        Fancybox.bind('[data-fancybox]', {
-            // Fancybox 옵션 설정
-            Toolbar: {
-                display: {
-                    left: ['infobar'],
-                    middle: [],
-                    right: ['slideshow', 'thumbs', 'close'],
-                },
-            },
-            Images: {
-                zoom: true,
-            },
-            Thumbs: {
-                autoStart: false,
-            },
-        });
+        // Fancybox 초기화 (기본 설정)
+        Fancybox.bind('[data-fancybox]');
 
         // 컴포넌트 언마운트 시 Fancybox 정리
         return () => {
