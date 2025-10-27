@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Fancybox } from '@fancyapps/ui';
-import '@fancyapps/ui/dist/fancybox/fancybox.css';
+// import { Fancybox } from '@fancyapps/ui';
+// import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
 interface User {
     id: string;
@@ -362,16 +362,10 @@ export default function Home() {
                                                     return false; // ✅ Link 이동 완전히 차단
                                                 }
 
-                                                Fancybox.show([
-                                                    {
-                                                        src: portfolio.domain,
-                                                        type: 'iframe',
-                                                        width: 1200,
-                                                        height: 800,
-                                                    },
-                                                ]);
+                                                // 새 창에서 미리보기 열기
+                                                window.open(portfolio.domain, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
 
-                                                return false; // ✅ Fancybox 실행 후 이동 차단
+                                                return false; // ✅ 새 창 열기 후 이동 차단
                                             }}
                                             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all"
                                         >
