@@ -22,7 +22,7 @@ interface Submission {
 const LS = {
     get<T>(key: string, fallback: T): T {
         try {
-            const v = window.localStorage.getItem(key);
+            const v = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
             return v == null ? fallback : (JSON.parse(v) as T);
         } catch {
             return fallback;
@@ -30,12 +30,14 @@ const LS = {
     },
     set(key: string, value: unknown) {
         try {
-            window.localStorage.setItem(key, JSON.stringify(value));
+            if (typeof window !== 'undefined') {
+                window.localStorage.setItem(key, JSON.stringify(value));
+            }
         } catch {}
     },
     remove(key: string) {
         try {
-            window.localStorage.removeItem(key);
+            if (typeof window !== 'undefined') localStorage.removeItem(key);
         } catch {}
     },
 };
@@ -53,7 +55,8 @@ export default function MySubmissionsPage() {
     // 초기 회사명: 마지막에 사용한 회사명 복원
     const [companyName, setCompanyName] = useState<string>(() => {
         if (typeof window === 'undefined') return '';
-        return LS.get<string>(LAST_COMPANY_KEY, '');
+        const auth = LS.get<any>('portfolio_auth', null);
+        return auth?.companyName ?? '';
     });
 
     const [password, setPassword] = useState(''); // 보안상 저장하지 않음
@@ -67,20 +70,21 @@ export default function MySubmissionsPage() {
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [searched, setSearched] = useState(false);
 
-    /* ---------- 회사명 변경 시: 로컬 캐시 복구 ---------- */
+    /* ---------- 회사명 변경/초기 로드 시: 로컬 캐시 자동 복원 ---------- */
     useEffect(() => {
-        // 마지막 회사명 기억 (UX)
-        if (companyName.trim()) LS.set(LAST_COMPANY_KEY, companyName.trim());
+        const name = companyName.trim();
+        if (name) LS.set(LAST_COMPANY_KEY, name);
 
-        // 해당 회사명으로 저장된 캐시 복원
         if (typeof window !== 'undefined') {
             const cachedSubs = LS.get<Submission[]>(submissionsKey, []);
             const cachedSearched = LS.get<boolean>(searchedKey, false);
+
             setSubmissions(cachedSubs);
-            setSearched(cachedSearched);
+            // 로컬에 데이터가 있으면 바로 목록 표시
+            setSearched((cachedSubs?.length ?? 0) > 0 || !!cachedSearched);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [companyName]); // key는 메모이제이션됨
+    }, [companyName]);
 
     /* ---------- 조회 핸들러 (결과를 LS+state 동시 반영) ---------- */
     const handleSearch = async () => {
@@ -121,9 +125,7 @@ export default function MySubmissionsPage() {
             } else {
                 const data = await response.json();
                 setError(data.error || '조회 중 오류가 발생했습니다.');
-                // 실패 시에도 searched 상태는 사용자 의도상 true로 남겨 둘 수 있음 (원래 로직 유지)
-                setSearched(true);
-                LS.set(searchedKey, true);
+                // 실패 시에는 로컬에 있는 과거 데이터만 유지 (searched는 로컬 기준으로 이미 설정됨)
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -137,14 +139,6 @@ export default function MySubmissionsPage() {
         router.push(`/portfolio/${submission.portfolio.slug}`);
     };
 
-    // 디버깅/문제해결용: 현재 회사명의 캐시 삭제 (선택)
-    const clearCurrentCache = () => {
-        LS.remove(submissionsKey);
-        LS.remove(searchedKey);
-        setSubmissions([]);
-        setSearched(false);
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -155,9 +149,6 @@ export default function MySubmissionsPage() {
                             포트폴리오 시스템
                         </Link>
                         <div className="flex items-center gap-2">
-                            <button onClick={clearCurrentCache} className="px-3 py-2 text-sm border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all" title="현재 회사명 캐시 초기화">
-                                캐시 초기화
-                            </button>
                             <Link href="/" className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
                                 홈으로
                             </Link>
@@ -218,7 +209,7 @@ export default function MySubmissionsPage() {
                     </div>
                 </div>
 
-                {/* Submissions List */}
+                {/* Submissions List - 로컬스토리지 기준으로 즉시 표시 */}
                 {searched && submissions.length > 0 && (
                     <div className="bg-white border-2 border-black rounded-lg overflow-hidden shadow-lg">
                         <div className="p-6 bg-gray-50 border-b-2 border-black">
@@ -263,9 +254,13 @@ export default function MySubmissionsPage() {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            <button onClick={() => handleContinue(submission)} className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
-                                                {submission.isDraft ? '이어서 작성' : '수정하기'}
-                                            </button>
+                                            {submission.isDraft ? (
+                                                <button onClick={() => handleContinue(submission)} className="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                                                    이어서 작성
+                                                </button>
+                                            ) : (
+                                                <span className="px-4 py-2 text-gray-500 border-2 border-gray-300 rounded-lg font-semibold">수정 불가</span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -274,17 +269,18 @@ export default function MySubmissionsPage() {
                     </div>
                 )}
 
-                {/* 조회했지만 결과가 없을 때 */}
+                {/* 조회했지만 결과가 없을 때 (로컬 기준) */}
                 {searched && submissions.length === 0 && <p className="text-gray-600">제출 내역이 없습니다.</p>}
 
                 {/* Info Box */}
                 <div className="mt-8 p-6 border-2 rounded-lg">
                     <h4 className="font-bold mb-2">💡 안내</h4>
                     <ul className="text-sm space-y-1">
-                        <li>• 포트폴리오 제출 시 입력한 상호명과 비밀번호를 입력하세요</li>
-                        <li>• 임시저장된 제출물은 "이어서 작성"으로 계속 작성할 수 있습니다</li>
-                        <li>• 제출 완료된 내용도 언제든지 수정할 수 있습니다</li>
-                        <li>• 비밀번호를 분실한 경우 관리자에게 문의해주세요</li>
+                        <li>• 페이지 진입/회사명 변경 시, 로컬에 저장된 제출 내역이 있으면 자동으로 표시됩니다.</li>
+                        <li>• 최신 서버 내역이 필요하면 상호명과 비밀번호로 조회하세요.</li>
+                        <li>• 임시저장된 제출물은 "이어서 작성"으로 계속 작성할 수 있습니다.</li>
+                        <li>• 제출 완료된 내용도 언제든지 수정할 수 있습니다.</li>
+                        <li>• 비밀번호를 분실한 경우 관리자에게 문의해주세요.</li>
                     </ul>
                 </div>
             </div>

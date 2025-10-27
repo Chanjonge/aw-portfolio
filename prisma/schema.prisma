@@ -47,6 +47,7 @@ model Portfolio {
   slug        String           @unique // URL slug for portfolio
   thumbnail   String?          // Thumbnail image URL
   categoryId  String?          @db.ObjectId // Foreign key to Category
+  domain      String?
   category    Category?        @relation(fields: [categoryId], references: [id])
   isActive    Boolean          @default(true)
   order       Int              @default(0) // Display order

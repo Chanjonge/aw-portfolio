@@ -108,6 +108,7 @@ export default function SuperAdminPage() {
         isActive: true,
         order: 0,
         categoryId: '',
+        domain: '',
     });
 
     // Question form
@@ -875,6 +876,19 @@ export default function SuperAdminPage() {
                                     placeholder="예: web-development"
                                 />
                             </div>
+                            {/* 도메인 입력 */}
+<div className="mb-4">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    도메인 (예: https://example.com)
+  </label>
+  <input
+    type="text"
+    value={portfolioForm.domain}
+    onChange={(e) => setPortfolioForm({ ...portfolioForm, domain: e.target.value })}
+    placeholder="포트폴리오 도메인 URL을 입력하세요"
+    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+  />
+</div>
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">썸네일 이미지 (선택사항)</label>
                                 <input

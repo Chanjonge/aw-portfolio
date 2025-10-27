@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Fancybox } from '@fancyapps/ui';
+import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
 interface User {
     id: string;
@@ -346,6 +348,39 @@ export default function Home() {
                                             <span className="text-gray-500">📝 {portfolio._count.questions}개 질문</span>
                                             <span className="text-gray-500">✅ {portfolio._count.submissions}개 제출</span>
                                         </div> */}
+                                    </div>
+                                    {/* 버튼 영역 */}
+                                    <div className="flex gap-3 mt-4">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                if (!portfolio.domain) {
+                                                    alert('이 포트폴리오에는 도메인이 등록되어 있지 않습니다.');
+                                                    return false; // ✅ Link 이동 완전히 차단
+                                                }
+
+                                                Fancybox.show([
+                                                    {
+                                                        src: portfolio.domain,
+                                                        type: 'iframe',
+                                                        width: 1200,
+                                                        height: 800,
+                                                    },
+                                                ]);
+
+                                                return false; // ✅ Fancybox 실행 후 이동 차단
+                                            }}
+                                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all"
+                                        >
+                                            미리보기
+                                        </button>
+
+                                        {/* 정보입력 버튼 */}
+                                        <button type="button" onClick={() => router.push(`/portfolio/${portfolio.slug}`)} className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-all">
+                                            정보입력
+                                        </button>
                                     </div>
                                 </Link>
                             ))}

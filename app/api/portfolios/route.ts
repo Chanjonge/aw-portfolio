@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { title, description, slug, thumbnail, categoryId, isActive, order } = body;
+        const { title, description, slug, thumbnail, categoryId, isActive, order ,domain} = body;
 
         if (!title || !slug) {
             return NextResponse.json({ error: '제목과 슬러그는 필수입니다.' }, { status: 400 });
@@ -60,9 +60,11 @@ export async function POST(request: NextRequest) {
                 description,
                 slug,
                 thumbnail,
+                domain,
                 categoryId: categoryId || null,
                 isActive: isActive ?? true,
                 order: order ?? 0,
+                
             },
         });
 
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
         if (error.code === 'P2002') {
             return NextResponse.json({ error: '이미 존재하는 슬러그입니다.' }, { status: 400 });
         }
-        return NextResponse.json({ error: '포트폴리오 생성에 실패했습니다.' }, { status: 500 });
+        return NextResponse.json({error: `포트폴리오 생성에 실패했습니다. ${error.message || JSON.stringify(error)}`  }, { status: 500 });
     }
 }
 
@@ -90,7 +92,7 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { id, title, description, slug, thumbnail, categoryId, isActive, order } = body;
+        const { id, title, description, slug, thumbnail, categoryId, isActive, order, domain } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'ID가 필요합니다.' }, { status: 400 });
