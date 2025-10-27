@@ -89,6 +89,29 @@ export default function Home() {
         // Fetch 초기 데이터
         fetchCategories();
         fetchPortfolios();
+
+        // Fancybox 초기화
+        Fancybox.bind('[data-fancybox]', {
+            // Fancybox 옵션 설정
+            Toolbar: {
+                display: {
+                    left: ['infobar'],
+                    middle: [],
+                    right: ['slideshow', 'thumbs', 'close'],
+                },
+            },
+            Images: {
+                zoom: true,
+            },
+            Thumbs: {
+                autoStart: false,
+            },
+        });
+
+        // 컴포넌트 언마운트 시 Fancybox 정리
+        return () => {
+            Fancybox.destroy();
+        };
     }, []);
 
     /* -------------------------------------------
@@ -352,25 +375,37 @@ export default function Home() {
                                     </div>
                                     {/* 버튼 영역 */}
                                     <div className="flex gap-3 mt-4">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                if (!portfolio.domain) {
+                                        {/* 미리보기 버튼 - Fancybox */}
+                                        {portfolio.domain ? (
+                                            <a
+                                                href={portfolio.domain}
+                                                data-fancybox="portfolio"
+                                                data-type="iframe"
+                                                data-preload="false"
+                                                data-width="1200"
+                                                data-height="800"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
+                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all inline-block text-center"
+                                            >
+                                                미리보기
+                                            </a>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
                                                     alert('이 포트폴리오에는 도메인이 등록되어 있지 않습니다.');
-                                                    return false; // ✅ Link 이동 완전히 차단
-                                                }
-
-                                                // 새 창에서 미리보기 열기
-                                                window.open(portfolio.domain, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-
-                                                return false; // ✅ 새 창 열기 후 이동 차단
-                                            }}
-                                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all"
-                                        >
-                                            미리보기
-                                        </button>
+                                                }}
+                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all opacity-50 cursor-not-allowed"
+                                                disabled
+                                            >
+                                                미리보기
+                                            </button>
+                                        )}
 
                                         {/* 정보입력 버튼 */}
                                         <button type="button" onClick={() => router.push(`/portfolio/${portfolio.slug}`)} className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-all">
