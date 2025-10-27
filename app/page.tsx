@@ -29,6 +29,7 @@ interface Portfolio {
     description: string;
     slug: string;
     thumbnail?: string;
+    domain?: string; // 미리보기용 도메인 URL
     categoryId?: string;
     category?: Category;
     isActive: boolean;
