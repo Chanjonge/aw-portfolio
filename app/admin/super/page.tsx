@@ -1030,6 +1030,7 @@ export default function SuperAdminPage() {
                             <div>
                                 <label className="block text-sm font-semibold text-black mb-2">질문 유형</label>
                                 <select value={questionForm.questionType} onChange={(e) => setQuestionForm({ ...questionForm, questionType: e.target.value })} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                                    <option value="notice">안내 전용</option>
                                     <option value="text">단답형 (텍스트)</option>
                                     <option value="textarea">장문형 (여러 줄)</option>
                                     <option value="file">파일 업로드</option>

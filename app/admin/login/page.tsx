@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AdminLoginPage() {
@@ -10,12 +10,50 @@ export default function AdminLoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // 컴포넌트 마운트 시 입력 필드 확인
+    useEffect(() => {
+        // 입력 필드가 제대로 렌더링되었는지 확인
+        const emailInput = document.getElementById('email') as HTMLInputElement;
+        const passwordInput = document.getElementById('password') as HTMLInputElement;
+
+        if (!emailInput || !passwordInput) {
+            console.error('Input fields not found');
+        }
+    }, []);
+
+    // 안전한 이벤트 핸들러
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmail(e.target.value);
+    };
+
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPassword(e.target.value);
+    };
+
+    // 폴백 이벤트 핸들러 (키보드 입력)
+    const handleEmailKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        const target = e.target as HTMLInputElement;
+        if (target.value !== email) {
+            setEmail(target.value);
+        }
+    };
+
+    const handlePasswordKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        const target = e.target as HTMLInputElement;
+        if (target.value !== password) {
+            setPassword(target.value);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
+        console.log('로그인 시도:', { email, password: '***' });
+
         try {
+            console.log('API 호출 시작...');
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
@@ -24,18 +62,32 @@ export default function AdminLoginPage() {
                 body: JSON.stringify({ email, password }),
             });
 
+            console.log('응답 상태:', response.status);
+            console.log('응답 헤더:', response.headers);
+
+            if (!response.ok) {
+                console.log('HTTP 오류:', response.status, response.statusText);
+            }
+
             const data = await response.json();
+            console.log('응답 데이터:', data);
 
             if (response.ok) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
 
+                console.log('로그인 성공, 리다이렉트:', data.user.role);
+
+                // 강제로 페이지 새로고침을 통한 리다이렉트
                 if (data.user.role === 'SUPER_ADMIN') {
-                    router.push('/admin/super');
+                    console.log('SUPER_ADMIN으로 리다이렉트');
+                    window.location.href = '/admin/super';
                 } else {
-                    router.push('/admin/dashboard');
+                    console.log('일반 관리자로 리다이렉트');
+                    window.location.href = '/admin/dashboard';
                 }
             } else {
+                console.log('로그인 실패:', data.error);
                 setError(data.error || '로그인에 실패했습니다.');
             }
         } catch (error) {
@@ -62,14 +114,42 @@ export default function AdminLoginPage() {
                             <label htmlFor="email" className="block text-sm font-semibold text-black mb-2">
                                 이메일
                             </label>
-                            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" placeholder="admin@example.com" />
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                required
+                                value={email}
+                                onChange={handleEmailChange}
+                                onKeyUp={handleEmailKeyUp}
+                                onInput={handleEmailChange}
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all bg-white text-black"
+                                placeholder="admin@example.com"
+                                autoComplete="email"
+                                disabled={loading}
+                                style={{ backgroundColor: 'white', color: 'black' }}
+                            />
                         </div>
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-semibold text-black mb-2">
                                 비밀번호
                             </label>
-                            <input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" placeholder="••••••••" />
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                value={password}
+                                onChange={handlePasswordChange}
+                                onKeyUp={handlePasswordKeyUp}
+                                onInput={handlePasswordChange}
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all bg-white text-black"
+                                placeholder="••••••••"
+                                autoComplete="current-password"
+                                disabled={loading}
+                                style={{ backgroundColor: 'white', color: 'black' }}
+                            />
                         </div>
 
                         <button type="submit" disabled={loading} className="w-full px-4 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">

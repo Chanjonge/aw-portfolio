@@ -73,6 +73,40 @@ a {
     }
 }
 
+/* 입력 필드 스타일 강화 */
+input[type='email'],
+input[type='password'],
+input[type='text'] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: white !important;
+    color: black !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+input[type='email']:focus,
+input[type='password']:focus,
+input[type='text']:focus {
+    outline: none !important;
+    border-color: black !important;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+input[type='email']:disabled,
+input[type='password']:disabled,
+input[type='text']:disabled {
+    background-color: #f9fafb !important;
+    color: #6b7280 !important;
+    cursor: not-allowed !important;
+}
+
 /* Portfolio List Styles */
 .portfolio-list {
     border-radius: 1rem;
