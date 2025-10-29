@@ -474,7 +474,18 @@ export default function PortfolioForm() {
                             {currentQuestions.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">이 단계에는 질문이 없습니다.</div>
                             ) : (
-                                currentQuestions.map((question) => <DynamicFormField key={question.id} question={question} value={formData[question.id]} onChange={(value) => handleChange(question.id, value)} error={errors[question.id]} />)
+                                currentQuestions.map((question) => (
+                                    <DynamicFormField
+                                        key={question.id}
+                                        question={{
+                                            ...question,
+                                            questionType: question.questionType || 'text',
+                                        }}
+                                        value={formData[question.id]}
+                                        onChange={(value) => handleChange(question.id, value)}
+                                        error={errors[question.id]}
+                                    />
+                                ))
                             )}
                         </div>
                     </div>
