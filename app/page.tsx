@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -16,9 +16,7 @@ interface Category {
     name: string;
     slug: string;
     order: number;
-    _count?: {
-        portfolios: number;
-    };
+    _count?: { portfolios: number };
 }
 
 interface Portfolio {
@@ -48,15 +46,36 @@ export default function Home() {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // 미리보기 팝업 상태
+    const [showPreview, setShowPreview] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string>('');
+    const [previewTitle, setPreviewTitle] = useState<string>('');
+    const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop'); // ⬅ 추가
+
+    // ESC 키로 팝업 닫기 + 스크롤 잠금/복원
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && showPreview) setShowPreview(false);
+        };
+        const prevOverflow = document.body.style.overflow;
+
+        if (showPreview) {
+            document.addEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = prevOverflow || '';
+        };
+    }, [showPreview]);
+
     // 인증 상태
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [companyName, setCompanyName] = useState('');
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState('');
 
-    /* -------------------------------------------
-     * 초기 로드 시 localStorage 데이터 복원
-     * ------------------------------------------- */
+    // 초기 로드
     useEffect(() => {
         // 사용자 로그인 상태 복원
         const userStr = localStorage.getItem('user');
@@ -69,7 +88,7 @@ export default function Home() {
             }
         }
 
-        // ✅ 로컬 인증 데이터 복원
+        // 로컬 인증 데이터 복원
         const savedAuth = localStorage.getItem('portfolio_auth');
         if (savedAuth) {
             try {
@@ -84,62 +103,46 @@ export default function Home() {
             }
         }
 
-        // Fetch 초기 데이터
         fetchCategories();
-        fetchPortfolios();
-
-        // 더 이상 Fancybox를 사용하지 않으므로 초기화 코드 제거
     }, []);
 
-    /* -------------------------------------------
-     * 카테고리 변경 시 포트폴리오 새로 불러오기
-     * ------------------------------------------- */
-    useEffect(() => {
-        fetchPortfolios();
-    }, [selectedCategory]);
-
-    /* -------------------------------------------
-     * API 요청
-     * ------------------------------------------- */
+    // 카테고리/포트폴리오
     const fetchCategories = async () => {
         try {
             const response = await fetch('/api/categories');
             const data = await response.json();
-            if (response.ok) {
-                setCategories(data.categories);
-            }
+            if (response.ok) setCategories(data.categories);
         } catch (error) {
             console.error('Failed to fetch categories:', error);
         }
     };
 
-    const fetchPortfolios = async () => {
+    const fetchPortfolios = useCallback(async () => {
         try {
+            setLoading(true);
             const url = selectedCategory ? `/api/portfolios?active=true&categoryId=${selectedCategory}` : '/api/portfolios?active=true';
             const response = await fetch(url);
             const data = await response.json();
-            if (response.ok) {
-                setPortfolios(data.portfolios);
-            }
+            if (response.ok) setPortfolios(data.portfolios);
         } catch (error) {
             console.error('Failed to fetch portfolios:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedCategory]);
 
-    /* -------------------------------------------
-     * 로그아웃 (사용자 계정)
-     * ------------------------------------------- */
+    useEffect(() => {
+        fetchPortfolios();
+    }, [fetchPortfolios]);
+
+    // 로그아웃
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
     };
 
-    /* -------------------------------------------
-     * 인증 처리 (상호명 + 비밀번호) - 회원 시스템 연동
-     * ------------------------------------------- */
+    // 인증 처리
     const handleAuth = async () => {
         setAuthError('');
 
@@ -147,29 +150,21 @@ export default function Home() {
             setAuthError('상호명을 입력해주세요.');
             return;
         }
-
         if (password.length !== 4 || !/^\d{4}$/.test(password)) {
             setAuthError('비밀번호 4자리를 입력해주세요.');
             return;
         }
 
         try {
-            // 회원 시스템에 로그인/가입 요청
             const response = await fetch('/api/members', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    companyName: companyName.trim(),
-                    password,
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ companyName: companyName.trim(), password }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // ✅ localStorage에 저장 (세션이 아니라 영구 저장)
                 localStorage.setItem(
                     'portfolio_auth',
                     JSON.stringify({
@@ -179,13 +174,8 @@ export default function Home() {
                         isNewMember: data.isNewMember,
                     })
                 );
-
                 setIsAuthenticated(true);
-
-                // 신규 회원인 경우 알림
-                if (data.isNewMember) {
-                    alert('환영합니다! 새로운 회원으로 등록되었습니다.');
-                }
+                if (data.isNewMember) alert('환영합니다! 새로운 회원으로 등록되었습니다.');
             } else {
                 setAuthError(data.error || '인증에 실패했습니다.');
             }
@@ -195,9 +185,7 @@ export default function Home() {
         }
     };
 
-    /* -------------------------------------------
-     * 인증 초기화 (다른 정보로 변경)
-     * ------------------------------------------- */
+    // 인증 초기화
     const handleClearAuth = () => {
         localStorage.removeItem('portfolio_auth');
         setCompanyName('');
@@ -216,7 +204,7 @@ export default function Home() {
                             <img src="/logo.png" alt="로고" className="h-8" />
                         </h1>
                         <div className="flex items-center gap-4">
-                            {/* 상호명 정보 - 인증된 사용자에게만 표시 (관리자가 아닐 때만) */}
+                            {/* 상호명 표시 (비관리자 인증시) */}
                             {isAuthenticated && companyName && !user && (
                                 <div className="flex items-center gap-2 mr-4">
                                     <span className="font-semibold text-black text-sm">상호명: {companyName}</span>
@@ -251,16 +239,15 @@ export default function Home() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
                 <div className="text-center mb-18">
                     <h2 className="text-4xl text-black mb-4">당신의 감각에 맞는 디자인을 찾아보세요</h2>
-                    <p className="text-xl text-gray-600">언제나 사용할 수 있습니다.</p>
+                    <p className="text-xl text-gray-600">쉽고 간편하게 만들어보세요</p>
                 </div>
 
-                {/* 사용자 인증 섹션 - 관리자가 아닐 때만 표시 */}
+                {/* 사용자 인증 섹션 */}
                 {!isAuthenticated && !user && (
                     <div className="max-w-md mx-auto mb-12 bg-white border-2 border-black rounded-lg p-8 shadow-lg">
                         <div className="text-center mb-6">
                             <h3 className="text-2xl font-bold text-black mb-2">제출자 정보 입력</h3>
                             <p className="text-gray-600">상호명과 4자리 비밀번호를 입력하세요</p>
-                            <p className="text-sm text-gray-500 mt-2">한 번 입력하면 모든 타입에서 자동으로 사용됩니다</p>
                         </div>
 
                         <div className="space-y-4">
@@ -299,22 +286,19 @@ export default function Home() {
                     </div>
                 )}
 
-                {/* Category Filter - 인증된 사용자 또는 관리자에게 표시 */}
+                {/* Category Filter */}
                 {(isAuthenticated || user) && categories.length > 0 && (
                     <div className="mb-8">
                         <div className="flex justify-start gap-3 flex-wrap">
-                            <button onClick={() => setSelectedCategory(null)} className={`px-6 py-1 text-base font-semibold transition-all ${selectedCategory === null ? 'bg-black text-white' : 'bg-white text-black border-bottom border-black hover:border-black hover:bg-black hover:text-white'}`}>
+                            <button onClick={() => setSelectedCategory(null)} className={`px-6 py-1 text-base font-semibold transition-all ${selectedCategory === null ? 'bg-black text-white' : 'bg-white text-black border-b border-black hover:bg-black hover:text-white'}`}>
                                 전체
                             </button>
+
                             {categories.map((category) => (
-                                // <button key={category.id} onClick={() => setSelectedCategory(category.id)} className={`px-6 rounded-lg font-semibold transition-all ${selectedCategory === category.id ? 'bg-black text-white' : 'bg-white text-black border border-black hover:border-black'}`}>
-                                //     {category.name}
-                                //     {category._count && category._count.portfolios > 0 && <span className="ml-2 text-sm opacity-75">({category._count.portfolios})</span>}
-                                // </button>
                                 <button
                                     key={category.id}
                                     onClick={() => setSelectedCategory(category.id)}
-                                    className={`px-6 py-1 text-base font-semibold transition-all ${selectedCategory === category.id ? 'bg-black text-white' : 'bg-white text-black border-bottom border-black hover:bg-black hover:text-white'}`}
+                                    className={`px-6 py-1 text-base font-semibold transition-all ${selectedCategory === category.id ? 'bg-black text-white' : 'bg-white text-black border-b border-black hover:bg-black hover:text-white'}`}
                                 >
                                     {category.name}
                                 </button>
@@ -323,7 +307,7 @@ export default function Home() {
                     </div>
                 )}
 
-                {/* 포트폴리오 목록 - 인증된 사용자 또는 관리자에게 표시 */}
+                {/* 포트폴리오 목록 */}
                 {(isAuthenticated || user) &&
                     (loading ? (
                         <div className="text-center py-12">
@@ -331,36 +315,36 @@ export default function Home() {
                         </div>
                     ) : portfolios.length === 0 ? (
                         <div className="text-center py-12">
-                            <div className="text-xl text-gray-600"> 등록된 타입이 존재하지 않습니다.</div>
+                            <div className="text-xl text-gray-600">등록된 타입이 존재하지 않습니다.</div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {portfolios.map((portfolio) => (
-                                <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="block border-1 border-black transition-all overflow-hidden group">
+                                <Link key={portfolio.id} href={`/portfolio/${portfolio.slug}`} className="border-black transition-all overflow-hidden group">
                                     {portfolio.thumbnail && (
-                                        <div className="portfolio-list w-full h-48 h-50 bg-gray-200 overflow-hidden">
-                                            <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                        <div className="portfolio-list w-full h-48 bg-gray-200 overflow-hidden">
+                                            <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                                         </div>
                                     )}
-                                    <div className="p-6">
+
+                                    <div className="p-2 pt-6">
                                         <h3 className="text-2xl font-bold mb-3 group-hover:text-gray-700">{portfolio.title}</h3>
                                         {portfolio.description && <p className="text-gray-600 mb-4">{portfolio.description}</p>}
-                                        {/* <div className="flex gap-4 text-sm">
-                                            <span className="text-gray-500">📝 {portfolio._count.questions}개 질문</span>
-                                            <span className="text-gray-500">✅ {portfolio._count.submissions}개 제출</span>
-                                        </div> */}
                                     </div>
+
                                     {/* 버튼 영역 */}
-                                    <div className="flex gap-3 mt-4">
-                                        {/* 미리보기 버튼 - 새 창으로 열기 (배포 환경 호환) */}
+                                    <div className="flex gap-3 px-2 pb-6">
+                                        {/* 미리보기 버튼 - 팝업 모달 */}
                                         {portfolio.domain ? (
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
-                                                    // 새 창에서 미리보기 열기 (배포 환경에서 더 안정적)
-                                                    window.open(portfolio.domain, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes,noopener,noreferrer');
+                                                    setPreviewUrl(portfolio.domain!);
+                                                    setPreviewTitle(portfolio.title);
+                                                    setPreviewMode('desktop'); // 초기값
+                                                    setShowPreview(true);
                                                 }}
                                                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all"
                                             >
@@ -382,7 +366,15 @@ export default function Home() {
                                         )}
 
                                         {/* 정보입력 버튼 */}
-                                        <button type="button" onClick={() => router.push(`/portfolio/${portfolio.slug}`)} className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-all">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                router.push(`/portfolio/${portfolio.slug}`);
+                                            }}
+                                            className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-all"
+                                        >
                                             정보입력
                                         </button>
                                     </div>
@@ -400,6 +392,67 @@ export default function Home() {
                     </div>
                 )}
             </div>
+
+            {/* 미리보기 팝업 모달 */}
+            {/* 미리보기 팝업 모달 */}
+            {showPreview && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowPreview(false)}>
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-8xl h-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${previewTitle} 미리보기`}>
+                        {/* 상단 바 */}
+                        <div className="bg-gray-100 px-4 py-3 rounded-t-lg border-b flex items-center gap-4">
+                            {/* 주소창 */}
+                            <div className="flex-1 px-3 py-2 text-sm text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap">{previewTitle}</div>
+
+                            {/* 모드 토글 */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewMode('desktop')}
+                                    className={`px-3 py-2 rounded-md border text-sm transition-all ${previewMode === 'desktop' ? 'bg-black text-white border-black' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                    title="데스크톱 미리보기"
+                                >
+                                    PC
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewMode('mobile')}
+                                    className={`px-3 py-2 rounded-md border text-sm transition-all ${previewMode === 'mobile' ? 'bg-black text-white border-black' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                    title="모바일 미리보기(500px)"
+                                >
+                                    모바일
+                                </button>
+                            </div>
+
+                            {/* 닫기 */}
+                            <button onClick={() => setShowPreview(false)} className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 font-bold text-lg transition-colors" title="닫기 (ESC)">
+                                ×
+                            </button>
+                        </div>
+
+                        {/* iframe 컨텐츠 */}
+                        <div className="flex-1 bg-white rounded-b-lg overflow-auto flex items-start justify-center">
+                            <div
+                                className={`mt-4 mb-6 rounded-[12px] border border-gray-200 shadow-md overflow-hidden bg-white`}
+                                style={{
+                                    width: previewMode === 'mobile' ? '500px' : '100%',
+                                    maxWidth: previewMode === 'mobile' ? '500px' : '100%',
+                                    height: 'calc(100% - 2rem)',
+                                    transition: 'all 0.6s ease-in-out',
+                                    transform: previewMode === 'mobile' ? 'scale(1)' : 'scale(1)',
+                                }}
+                            >
+                                <iframe
+                                    key={`${previewMode}-${previewUrl}`} // 모드 전환 시 레이아웃 재계산
+                                    src={previewUrl}
+                                    className={previewMode === 'mobile' ? 'w-[500px] h-full border-0' : 'w-full h-full border-0'}
+                                    title={`${previewTitle} 미리보기`}
+                                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

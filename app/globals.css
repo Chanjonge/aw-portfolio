@@ -119,3 +119,7 @@ input[type='text']:disabled {
 .border-bottom {
     border-bottom-width: 1px;
 }
+
+.max-w-8xl {
+    max-width: 90rem;
+}

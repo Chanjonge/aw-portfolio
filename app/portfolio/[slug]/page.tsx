@@ -27,7 +27,7 @@ interface Portfolio {
 }
 
 interface FormData {
-    [key: string]: string;
+    [key: string]: any;
 }
 
 export default function PortfolioForm() {
@@ -37,7 +37,7 @@ export default function PortfolioForm() {
 
     const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
     const [questions, setQuestions] = useState<Question[]>([]);
-    const [currentStep, setCurrentStep] = useState(1); // 1+ = 질문 단계
+    const [currentStep, setCurrentStep] = useState(-1); // -1 = 로딩, 0+ = 질문 단계
     const [formData, setFormData] = useState<FormData>({});
     const [errors, setErrors] = useState<FormData>({});
     const [loading, setLoading] = useState(true);
@@ -50,6 +50,14 @@ export default function PortfolioForm() {
     const [existingSubmissionId, setExistingSubmissionId] = useState<string | null>(null);
 
     const maxStep = questions.length > 0 ? Math.max(...questions.map((q) => q.step)) : 1;
+    const minStep = questions.length > 0 ? Math.min(...questions.map((q) => q.step)) : 0;
+
+    // 질문이 로드되면 적절한 시작 단계로 설정
+    useEffect(() => {
+        if (questions.length > 0 && currentStep === -1) {
+            setCurrentStep(minStep);
+        }
+    }, [questions, minStep, currentStep]);
 
     useEffect(() => {
         // Check user role
@@ -219,6 +227,14 @@ export default function PortfolioForm() {
                         return;
                     }
                 }
+                // 동의 체크박스는 agreed 값 확인
+                else if (question.questionType === 'agreement') {
+                    if (!value || !value.agreed) {
+                        newErrors[question.id] = '안내사항에 동의해주세요.';
+                        isValid = false;
+                        return;
+                    }
+                }
                 // 텍스트 필드는 문자열 길이 확인
                 else {
                     if (!value || (typeof value === 'string' && value.trim().length === 0)) {
@@ -251,7 +267,7 @@ export default function PortfolioForm() {
     };
 
     const handlePrevious = () => {
-        if (currentStep > 1) {
+        if (currentStep > minStep) {
             setCurrentStep(currentStep - 1);
             window.scrollTo(0, 0);
         }
@@ -369,7 +385,7 @@ export default function PortfolioForm() {
         }
     };
 
-    if (loading) {
+    if (loading || currentStep === -1) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-xl">로딩 중...</div>
@@ -435,12 +451,12 @@ export default function PortfolioForm() {
                 <div className="mb-8">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-medium text-gray-700">
-                            단계 {currentStep} / {maxStep}
+                            {currentStep === 0 ? '안내사항' : `단계 ${currentStep}`} / {maxStep}
                         </span>
-                        <span className="text-sm text-gray-500">{Math.round((currentStep / maxStep) * 100)}% 완료</span>
+                        <span className="text-sm text-gray-500">{Math.round(((currentStep - minStep + 1) / (maxStep - minStep + 1)) * 100)}% 완료</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-black h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / maxStep) * 100}%` }} />
+                        <div className="bg-black h-2 rounded-full transition-all duration-300" style={{ width: `${((currentStep - minStep + 1) / (maxStep - minStep + 1)) * 100}%` }} />
                     </div>
                 </div>
 
@@ -449,8 +465,8 @@ export default function PortfolioForm() {
                     {/* 질문 단계 */}
                     <div>
                         <div className="mb-6">
-                            <h2 className="text-2xl font-bold text-black mb-2">단계 {currentStep}</h2>
-                            <p className="text-gray-600">모든 필수 항목을 작성해주세요.</p>
+                            <h2 className="text-2xl font-bold text-black mb-2">{currentStep === 0 ? '안내사항' : `단계 ${currentStep}`}</h2>
+                            <p className="text-gray-600">{currentStep === 0 ? '다음 단계로 진행하기 전에 안내사항을 확인해주세요.' : '모든 필수 항목을 작성해주세요.'}</p>
                         </div>
 
                         {/* Questions - 스크롤 가능 영역 */}
@@ -465,7 +481,11 @@ export default function PortfolioForm() {
 
                     {/* Navigation Buttons */}
                     <div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
-                        <button onClick={handlePrevious} disabled={currentStep === 1} className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}>
+                        <button
+                            onClick={handlePrevious}
+                            disabled={currentStep === minStep}
+                            className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === minStep ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}
+                        >
                             이전
                         </button>
 
@@ -476,7 +496,7 @@ export default function PortfolioForm() {
 
                             {currentStep < maxStep ? (
                                 <button onClick={handleNext} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
-                                    다음
+                                    {currentStep === 0 ? '시작하기' : '다음'}
                                 </button>
                             ) : (
                                 <button onClick={handleSubmit} disabled={submitting} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">

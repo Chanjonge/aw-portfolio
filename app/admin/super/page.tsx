@@ -726,9 +726,11 @@ export default function SuperAdminPage() {
                             <button
                                 onClick={() => {
                                     setEditingQuestion(null);
+                                    const maxStep = questions.length > 0 ? Math.max(...questions.map((q) => q.step)) : 0;
+                                    const nextStep = maxStep + 1;
                                     setQuestionForm({
                                         portfolioId: selectedPortfolio,
-                                        step: Math.max(...questions.map((q) => q.step), 0) + 1,
+                                        step: nextStep,
                                         title: '',
                                         description: '',
                                         thumbnail: '',
@@ -1001,11 +1003,12 @@ export default function SuperAdminPage() {
                                     <input
                                         type="number"
                                         required
-                                        min="1"
+                                        min="0"
                                         value={questionForm.step}
                                         onChange={(e) => setQuestionForm({ ...questionForm, step: parseInt(e.target.value) })}
                                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                                     />
+                                    <p className="text-xs text-gray-600 mt-1">0단계: 안내사항 페이지, 1단계 이상: 일반 질문</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-black mb-2">순서</label>
@@ -1031,6 +1034,7 @@ export default function SuperAdminPage() {
                                 <label className="block text-sm font-semibold text-black mb-2">질문 유형</label>
                                 <select value={questionForm.questionType} onChange={(e) => setQuestionForm({ ...questionForm, questionType: e.target.value })} className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
                                     <option value="notice">안내 전용</option>
+                                    <option value="agreement">동의 체크박스 (0단계 안내사항)</option>
                                     <option value="text">단답형 (텍스트)</option>
                                     <option value="textarea">장문형 (여러 줄)</option>
                                     <option value="file">파일 업로드</option>
@@ -1038,6 +1042,85 @@ export default function SuperAdminPage() {
                                     <option value="repeatable">반복 가능한 필드</option>
                                 </select>
                             </div>
+                            {questionForm.questionType === 'agreement' && (
+                                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                                    <h4 className="font-semibold text-black">동의 체크박스 설정</h4>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-black mb-2">안내사항 개수</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            value={(() => {
+                                                try {
+                                                    const parsed = JSON.parse(questionForm.options || '{}');
+                                                    return parsed.agreementItems?.length || 3;
+                                                } catch {
+                                                    return 3;
+                                                }
+                                            })()}
+                                            onChange={(e) => {
+                                                const count = parseInt(e.target.value) || 3;
+                                                try {
+                                                    const parsed = JSON.parse(questionForm.options || '{}');
+                                                    const currentItems = parsed.agreementItems || [];
+                                                    const newItems = [];
+
+                                                    for (let i = 0; i < count; i++) {
+                                                        newItems.push(currentItems[i] || `안내사항 ${i + 1}을 입력하세요.`);
+                                                    }
+
+                                                    parsed.agreementItems = newItems;
+                                                    setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
+                                                } catch {
+                                                    const newItems = [];
+                                                    for (let i = 0; i < count; i++) {
+                                                        newItems.push(`안내사항 ${i + 1}을 입력하세요.`);
+                                                    }
+                                                    setQuestionForm({
+                                                        ...questionForm,
+                                                        options: JSON.stringify({ agreementItems: newItems }),
+                                                    });
+                                                }
+                                            }}
+                                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-semibold text-black">안내사항 내용</label>
+                                        {(() => {
+                                            try {
+                                                const parsed = JSON.parse(questionForm.options || '{}');
+                                                return (parsed.agreementItems || []).map((item: string, index: number) => (
+                                                    <div key={index} className="flex gap-3 items-start p-3 bg-white rounded border">
+                                                        <span className="flex-shrink-0 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-sm font-semibold mt-1">{index + 1}</span>
+                                                        <textarea
+                                                            value={item || ''}
+                                                            onChange={(e) => {
+                                                                const parsed = JSON.parse(questionForm.options || '{}');
+                                                                parsed.agreementItems[index] = e.target.value;
+                                                                setQuestionForm({ ...questionForm, options: JSON.stringify(parsed) });
+                                                            }}
+                                                            placeholder={`안내사항 ${index + 1}을 입력하세요`}
+                                                            rows={3}
+                                                            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                                                        />
+                                                    </div>
+                                                ));
+                                            } catch {
+                                                return <p className="text-red-500 text-sm">안내사항 설정을 불러올 수 없습니다.</p>;
+                                            }
+                                        })()}
+                                    </div>
+
+                                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                                        <strong>💡 사용 팁:</strong> 0단계 안내사항 페이지로 사용하려면 단계를 0으로 설정하고, 순서를 0으로 설정하세요.
+                                    </div>
+                                </div>
+                            )}
+
                             {questionForm.questionType === 'checkbox' && (
                                 <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
                                     <h4 className="font-semibold text-black">체크박스 설정</h4>

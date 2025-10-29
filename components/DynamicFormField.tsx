@@ -23,7 +23,11 @@ interface RepeatableOptions {
     fields: RepeatableField[];
 }
 
-type AnyOptions = CheckboxOptions | RepeatableOptions | null;
+interface AgreementOptions {
+    agreementItems: string[];
+}
+
+type AnyOptions = CheckboxOptions | RepeatableOptions | AgreementOptions | null;
 
 interface DynamicFormFieldProps {
     question: {
@@ -62,12 +66,15 @@ function isCheckboxOptions(o: AnyOptions): o is CheckboxOptions {
 function isRepeatableOptions(o: AnyOptions): o is RepeatableOptions {
     return !!o && Array.isArray((o as any).fields);
 }
+function isAgreementOptions(o: AnyOptions): o is AgreementOptions {
+    return !!o && Array.isArray((o as any).agreementItems);
+}
 
 export default function DynamicFormField({ question, value, onChange, error }: DynamicFormFieldProps) {
     const [uploading, setUploading] = useState(false);
 
     // 기본값
-    const questionType = question.questionType || 'text';
+    const questionType = (question.questionType ?? 'text').toString().trim().toLowerCase();
 
     // 옵션 파싱 (메모)
     const parsedOptions = useMemo(() => parseOptions(question.options), [question.options]);
@@ -417,6 +424,58 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                     </button>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
+            </div>
+        );
+    }
+
+    // 동의 체크박스 (0단계 안내사항)
+    if (questionType === 'agreement') {
+        const agreementItems = isAgreementOptions(parsedOptions) ? parsedOptions.agreementItems : [];
+        const currentValue = value || { agreed: false };
+
+        return (
+            <div className="space-y-6 bg-white rounded-lg border-gray-200">
+                {question.thumbnail && (
+                    <div className="w-full h-48 bg-gray-100 rounded-xl overflow-hidden">
+                        <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                )}
+
+                <div className="text-center">
+                    {/* <h2 className="text-2xl font-bold text-black mb-4">{question.title}</h2> */}
+                    {question.description && <p className="text-gray-600 leading-relaxed mb-6">{question.description}</p>}
+                </div>
+
+                {/* 안내사항 리스트 */}
+                {agreementItems.length > 0 && (
+                    <div className="space-y-4">
+                        {/* <h3 className="text-lg font-semibold text-black">안내사항</h3> */}
+                        <div className="rounded-lg space-y-3">
+                            {agreementItems.map((item: string, index: number) => (
+                                <div key={index} className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-sm font-semibold">{index + 1}</span>
+                                    <p className="text-gray-700 leading-relaxed">{item}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* 동의 체크박스 */}
+                <div className="border-gray-200 pt-6">
+                    <label className="flex items-start gap-4 cursor-pointer border-gray-300 rounded-lg hover:border-black transition-all">
+                        <input type="checkbox" checked={currentValue.agreed || false} onChange={(e) => onChange({ agreed: e.target.checked })} className="w-5 h-5 mt-1 text-black border-2 border-gray-400 rounded focus:ring-2 focus:ring-black cursor-pointer" />
+                        <div className="flex-1">
+                            <span className="text-lg font-semibold text-black">
+                                위 안내사항을 모두 확인했으며, 이에 동의합니다.
+                                {question.isRequired && <span className="text-red-500 ml-1">*</span>}
+                            </span>
+                            <p className="text-sm text-gray-600 mt-1">다음 단계로 진행하려면 반드시 동의해주세요.</p>
+                        </div>
+                    </label>
+                </div>
+
+                {error && <p className="text-sm text-red-500 text-center">{error}</p>}
             </div>
         );
     }

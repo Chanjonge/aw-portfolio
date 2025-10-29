@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
         const { portfolioId, step, title, description, thumbnail, minLength, maxLength, requireMinLength, order, isRequired, questionType, options } = await request.json();
 
-        if (!portfolioId || !step || !title || order === undefined) {
+        if (!portfolioId || step === undefined || step === null || !title || order === undefined) {
             return NextResponse.json({ error: '필수 필드를 입력해주세요.' }, { status: 400 });
         }
 
