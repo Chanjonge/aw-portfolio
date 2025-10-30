@@ -24,55 +24,45 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: '포트폴리오 ID가 필요합니다.' }, { status: 400 });
         }
 
-        // 제출 목록
+        // 제출 데이터
         const submissions = await prisma.formSubmission.findMany({
             where: {
-                portfolioId: portfolioId,
+                portfolioId,
                 isDraft: false,
-                companyName: {
-                    not: '',
-                },
+                companyName: { not: '' },
             },
             include: {
                 portfolio: {
-                    select: {
-                        title: true,
-                        slug: true,
-                    },
+                    select: { title: true, slug: true },
                 },
             },
-            orderBy: {
-                completedAt: 'desc',
-            },
+            orderBy: { completedAt: 'desc' },
         });
 
         if (submissions.length === 0) {
             return NextResponse.json({ error: '해당 포트폴리오에 제출 데이터가 없습니다.' }, { status: 404 });
         }
 
-        // 질문 목록
+        // 질문
         const questions = await prisma.question.findMany({
-            where: { portfolioId: portfolioId },
+            where: { portfolioId },
             orderBy: [{ step: 'asc' }, { order: 'asc' }],
         });
 
-        // 단계별 그룹
-        const questionsByStep = questions.reduce((groups: { [key: number]: any[] }, question) => {
-            if (!groups[question.step]) {
-                groups[question.step] = [];
-            }
-            groups[question.step].push(question);
+        const questionsByStep = questions.reduce((groups: { [key: number]: any[] }, q) => {
+            if (!groups[q.step]) groups[q.step] = [];
+            groups[q.step].push(q);
             return groups;
         }, {});
 
-        // 1. 기본 헤더
+        // 1) 기본 헤더
         const columnHeaders: string[] = ['순번', '상호명'];
 
-        // 2. 질문 헤더 (file 타입은 제외)
+        // 2) 질문 헤더 (file 제외)
         Object.keys(questionsByStep)
-            .sort((a, b) => parseInt(a) - parseInt(b))
+            .sort((a, b) => Number(a) - Number(b))
             .forEach((step) => {
-                questionsByStep[parseInt(step)]
+                questionsByStep[Number(step)]
                     .sort((a, b) => a.order - b.order)
                     .forEach((question) => {
                         if (question.questionType === 'file') return;
@@ -80,82 +70,148 @@ export async function GET(request: NextRequest) {
                     });
             });
 
-        // 👇 여기서부터 동적 필드(rooms, specials) 추가 준비
-        // 모든 제출에서 rooms/specials 최대 개수 계산 (열 개수 맞추려고)
+        // =========================
+        // 여기부터 rooms / specials 준비
+        // =========================
+
+        // 제출들 중에서 rooms / specials 최대 개수 계산
         let maxRooms = 0;
         let maxSpecials = 0;
 
-        submissions.forEach((submission) => {
-            const responses = JSON.parse(submission.responses || '{}');
-
-            const rooms = Array.isArray(responses.rooms) ? responses.rooms : [];
-            const specials = Array.isArray(responses.specials) ? responses.specials : [];
-
+        const parsedSubmissions = submissions.map((s) => {
+            const r = JSON.parse(s.responses || '{}');
+            const rooms = Array.isArray(r.rooms) ? r.rooms : [];
+            const specials = Array.isArray(r.specials) ? r.specials : [];
             if (rooms.length > maxRooms) maxRooms = rooms.length;
             if (specials.length > maxSpecials) maxSpecials = specials.length;
+            return { submission: s, responses: r, rooms, specials };
         });
 
-        // 3. 객실 헤더 추가
-        // 객실1명, 객실1설명, 객실1형태, 객실1요금, 객실2..., ...
+        // 3) 동적 객실 헤더 만들기
+        const dynamicRoomHeaders: string[] = [];
         for (let i = 1; i <= maxRooms; i++) {
-            columnHeaders.push(`객실${i}명`);
-            columnHeaders.push(`객실${i}설명`);
-            columnHeaders.push(`객실${i}형태`);
-            columnHeaders.push(`객실${i}요금`);
+            dynamicRoomHeaders.push(`객실${i}명`);
+            dynamicRoomHeaders.push(`객실${i}설명`);
+            dynamicRoomHeaders.push(`객실${i}형태`);
+            dynamicRoomHeaders.push(`객실${i}요금`);
         }
 
-        // 4. 스페셜 헤더 추가
-        // 스페셜1명, 스페셜1설명, 스페셜2명, ...
+        // 4) 동적 스페셜 헤더 만들기
+        const dynamicSpecialHeaders: string[] = [];
         for (let i = 1; i <= maxSpecials; i++) {
-            columnHeaders.push(`스페셜${i}명`);
-            columnHeaders.push(`스페셜${i}설명`);
+            dynamicSpecialHeaders.push(`스페셜${i}명`);
+            dynamicSpecialHeaders.push(`스페셜${i}설명`);
         }
 
-        // 엑셀 데이터
+        // =========================
+        // 헤더 끼워 넣는 위치 계산
+        // =========================
+
+        // (1) 객실 헤더 끼울 위치
+        // - 네가 폼에서 쓰는 "객실명", "객실 설명", "형태" 같은 기본 질문 뒤에 꽂아야 하니까
+        // - "객실"로 시작하는 것들을 찾고, 그 중 마지막 index 뒤에 넣자
+        const roomBaseIndexes: number[] = [];
+        columnHeaders.forEach((h, idx) => {
+            // 필요하면 여기 조건 더 좁혀도 됨 (예: h === '객실명' || h === '객실 설명' ...)
+            if (h.startsWith('객실')) {
+                roomBaseIndexes.push(idx);
+            }
+        });
+
+        let insertRoomAt = -1;
+        if (roomBaseIndexes.length > 0) {
+            insertRoomAt = roomBaseIndexes[roomBaseIndexes.length - 1] + 1;
+        }
+
+        // (2) 스페셜 헤더 끼울 위치
+        const specialBaseIndexes: number[] = [];
+        columnHeaders.forEach((h, idx) => {
+            if (h.startsWith('스페셜')) {
+                specialBaseIndexes.push(idx);
+            }
+        });
+
+        let insertSpecialAt = -1;
+        if (specialBaseIndexes.length > 0) {
+            insertSpecialAt = specialBaseIndexes[specialBaseIndexes.length - 1] + 1;
+        }
+
+        // 이제 실제로 끼워넣기
+        // 주의: 객실 먼저 넣고, 그 다음 스페셜 넣어야 index 안 꼬임
+        // 다만 "객실 뒤 → 객실1..." → "스페셜 뒤 → 스페셜1..." 이 순서라
+        // 객실 헤더 먼저 splice 하고, 그 다음 스페셜을 splice 할 때는
+        // 객실이 추가된 길이를 고려해서 위치를 다시 계산해줘야 함
+
+        // 1) 객실 헤더 삽입
+        if (insertRoomAt !== -1 && dynamicRoomHeaders.length > 0) {
+            columnHeaders.splice(insertRoomAt, 0, ...dynamicRoomHeaders);
+        } else if (dynamicRoomHeaders.length > 0) {
+            // 객실 관련 기본 컬럼이 없으면 맨 끝에
+            columnHeaders.push(...dynamicRoomHeaders);
+        }
+
+        // 2) 스페셜 헤더 삽입
+        if (dynamicSpecialHeaders.length > 0) {
+            if (insertSpecialAt !== -1) {
+                // 객실을 먼저 넣어버렸으니까
+                // 객실이 스페셜보다 앞쪽에 있었다면 index가 밀렸을 수 있음
+                // 가장 간단하게는 "지금 columnHeaders에서 다시 스페셜 위치 찾기"
+                const reSpecialIndexes: number[] = [];
+                columnHeaders.forEach((h, idx) => {
+                    if (h.startsWith('스페셜')) {
+                        reSpecialIndexes.push(idx);
+                    }
+                });
+                let realInsertSpecialAt = reSpecialIndexes.length > 0 ? reSpecialIndexes[reSpecialIndexes.length - 1] + 1 : columnHeaders.length;
+                columnHeaders.splice(realInsertSpecialAt, 0, ...dynamicSpecialHeaders);
+            } else {
+                columnHeaders.push(...dynamicSpecialHeaders);
+            }
+        }
+
+        // =========================
+        // 실제 데이터 만들기
+        // =========================
         const excelData: any[] = [];
 
-        submissions.forEach((submission, index) => {
-            const responses = JSON.parse(submission.responses || '{}');
-
+        parsedSubmissions.forEach(({ submission, responses, rooms, specials }, index) => {
             const row: any = {};
 
             // 기본
             row['순번'] = index + 1;
             row['상호명'] = submission.companyName;
 
-            // 질문 값
+            // 질문 채우기
             Object.keys(questionsByStep)
-                .sort((a, b) => parseInt(a) - parseInt(b))
+                .sort((a, b) => Number(a) - Number(b))
                 .forEach((step) => {
-                    questionsByStep[parseInt(step)]
+                    questionsByStep[Number(step)]
                         .sort((a, b) => a.order - b.order)
                         .forEach((question) => {
                             if (question.questionType === 'file') return;
-
-                            const response = responses[question.id];
+                            const resp = responses[question.id];
                             let value = '';
 
-                            if (response !== undefined && response !== null) {
-                                if (question.questionType === 'checkbox' && Array.isArray(response)) {
-                                    value = response.join(', ');
-                                } else if (typeof response === 'object') {
-                                    // 체크박스+입력
-                                    if (Array.isArray((response as any).checked) || (response as any).inputs) {
-                                        const checked = Array.isArray((response as any).checked) ? (response as any).checked.join(', ') : '';
+                            if (resp !== undefined && resp !== null) {
+                                if (question.questionType === 'checkbox' && Array.isArray(resp)) {
+                                    value = resp.join(', ');
+                                } else if (typeof resp === 'object') {
+                                    if (Array.isArray((resp as any).checked) || (resp as any).inputs) {
+                                        const checked = Array.isArray((resp as any).checked) ? (resp as any).checked.join(', ') : '';
                                         const inputs =
-                                            (response as any).inputs && Object.keys((response as any).inputs).length > 0
-                                                ? Object.entries((response as any).inputs)
+                                            (resp as any).inputs && Object.keys((resp as any).inputs).length > 0
+                                                ? Object.entries((resp as any).inputs)
                                                       .map(([k, v]) => `${k}: ${v}`)
                                                       .join(', ')
                                                 : '';
                                         value = [checked, inputs].filter(Boolean).join(' / ');
-                                    } else if (Array.isArray(response)) {
-                                        value = response.map((item) => (typeof item === 'object' ? Object.values(item).join(' ') : String(item))).join(', ');
+                                    } else if (Array.isArray(resp)) {
+                                        value = resp.map((item) => (typeof item === 'object' ? Object.values(item).join(' ') : String(item))).join(', ');
                                     } else {
-                                        value = JSON.stringify(response);
+                                        value = JSON.stringify(resp);
                                     }
                                 } else {
-                                    value = String(response);
+                                    value = String(resp);
                                 }
                             }
 
@@ -163,8 +219,7 @@ export async function GET(request: NextRequest) {
                         });
                 });
 
-            // ✅ 객실 데이터 채우기
-            const rooms = Array.isArray(responses.rooms) ? responses.rooms : [];
+            // 객실 채우기
             for (let i = 0; i < maxRooms; i++) {
                 const room = rooms[i];
                 const base = `객실${i + 1}`;
@@ -174,8 +229,7 @@ export async function GET(request: NextRequest) {
                 row[`${base}요금`] = room ? room.price || '' : '';
             }
 
-            // ✅ 스페셜 데이터 채우기
-            const specials = Array.isArray(responses.specials) ? responses.specials : [];
+            // 스페셜 채우기
             for (let i = 0; i < maxSpecials; i++) {
                 const sp = specials[i];
                 const base = `스페셜${i + 1}`;
@@ -186,13 +240,13 @@ export async function GET(request: NextRequest) {
             excelData.push(row);
         });
 
-        // 워크북 생성
+        // 워크북
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(excelData, {
             header: columnHeaders,
         });
 
-        // 컬럼 너비
+        // 너비
         const colWidths: any[] = [];
         columnHeaders.forEach((header, index) => {
             const maxLength = Math.max(header.length, ...excelData.map((row) => String(row[header] || '').length));
