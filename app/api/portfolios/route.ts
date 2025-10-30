@@ -21,7 +21,13 @@ export async function GET(request: NextRequest) {
                 _count: {
                     select: {
                         questions: true,
-                        submissions: true,
+                        submissions: {
+                            where: {
+                                NOT: {
+                                    OR: [{ companyName: null }, { companyName: '' }],
+                                },
+                            },
+                        },
                     },
                 },
             },

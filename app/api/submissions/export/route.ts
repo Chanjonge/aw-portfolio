@@ -24,11 +24,14 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: '포트폴리오 ID가 필요합니다.' }, { status: 400 });
         }
 
-        // 해당 포트폴리오의 제출 데이터 가져오기
+        // 해당 포트폴리오의 제출 데이터 가져오기 (유효한 제출만)
         const submissions = await prisma.formSubmission.findMany({
             where: {
                 portfolioId: portfolioId,
                 isDraft: false, // 완료된 제출만
+                NOT: {
+                    OR: [{ companyName: null }, { companyName: '' }],
+                },
             },
             include: {
                 portfolio: {

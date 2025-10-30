@@ -11,10 +11,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: '상호명과 비밀번호를 입력해주세요.' }, { status: 400 });
         }
 
-        // 해당 상호명의 모든 제출 찾기
+        // 해당 상호명의 모든 제출 찾기 (유효한 제출만)
         const allSubmissions = await prisma.formSubmission.findMany({
             where: {
-                companyName,
+                companyName: companyName,
+                NOT: {
+                    OR: [{ companyName: null }, { companyName: '' }],
+                },
             },
             include: {
                 portfolio: {
