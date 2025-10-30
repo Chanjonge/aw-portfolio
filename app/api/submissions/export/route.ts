@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: '포트폴리오 ID가 필요합니다.' }, { status: 400 });
         }
 
-        // 해당 포트폴리오의 제출 데이터 가져오기 (유효한 제출만)
+        // 제출 데이터
         const submissions = await prisma.formSubmission.findMany({
             where: {
                 portfolioId: portfolioId,
-                isDraft: false, // 완료된 제출만
+                isDraft: false,
                 companyName: {
                     not: '',
                 },
@@ -50,13 +50,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: '해당 포트폴리오에 제출 데이터가 없습니다.' }, { status: 404 });
         }
 
-        // 포트폴리오의 질문 정보 가져오기 (단계별, 순서별로 정렬)
+        // 질문 데이터
         const questions = await prisma.question.findMany({
             where: { portfolioId: portfolioId },
             orderBy: [{ step: 'asc' }, { order: 'asc' }],
         });
 
-        // 단계별로 질문 그룹화
         const questionsByStep = questions.reduce((groups: { [key: number]: any[] }, question) => {
             if (!groups[question.step]) {
                 groups[question.step] = [];
@@ -65,59 +64,45 @@ export async function GET(request: NextRequest) {
             return groups;
         }, {});
 
-        // 엑셀 컬럼 헤더 순서 정의 (기본 정보 + 단계별 질문들)
+        // ===== 메인 시트(제출목록) 만들기 =====
         const columnHeaders = ['순번', '상호명'];
 
-        // 단계별로 컬럼 헤더 추가
         Object.keys(questionsByStep)
             .sort((a, b) => parseInt(a) - parseInt(b))
             .forEach((step) => {
-                // 단계 구분자 추가 (예: "=== 1단계 ===")
-
-                // 해당 단계의 질문들 추가
                 questionsByStep[parseInt(step)]
                     .sort((a, b) => a.order - b.order)
                     .forEach((question) => {
+                        // ✅ 이미지/파일 질문은 제외
                         if (question.questionType === 'file') return;
                         columnHeaders.push(question.title);
                     });
             });
 
-        // 엑셀 데이터 준비
         const excelData: any[] = [];
 
         submissions.forEach((submission, index) => {
-            const responses = JSON.parse(submission.responses);
+            const responses = JSON.parse(submission.responses || '{}');
 
-            // 순서가 보장된 행 객체 생성
             const row: any = {};
-
-            // 1. 기본 정보 먼저 추가
             row['순번'] = index + 1;
             row['상호명'] = submission.companyName;
 
-            // 2. 단계별로 질문들 추가
             Object.keys(questionsByStep)
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .forEach((step) => {
-                    // 단계 구분자 컬럼에는 빈 값 추가
-                    // row[`=== ${step}단계 ===`] = '';
-
-                    // 해당 단계의 질문들에 대한 응답 추가
                     questionsByStep[parseInt(step)]
                         .sort((a, b) => a.order - b.order)
                         .forEach((question) => {
                             if (question.questionType === 'file') return;
+
                             const response = responses[question.id];
                             let value = '';
 
                             if (response !== undefined && response !== null) {
                                 if (question.questionType === 'checkbox' && Array.isArray(response)) {
                                     value = response.join(', ');
-                                } else if (question.questionType === 'file' && Array.isArray(response)) {
-                                    value = response.map((file: any) => file.name || file).join(', ');
                                 } else if (typeof response === 'object') {
-                                    // 체크박스+입력 형태
                                     if (Array.isArray(response.checked) || response.inputs) {
                                         const checked = Array.isArray(response.checked) ? response.checked.join(', ') : '';
                                         const inputs =
@@ -127,9 +112,7 @@ export async function GET(request: NextRequest) {
                                                       .join(', ')
                                                 : '';
                                         value = [checked, inputs].filter(Boolean).join(' / ');
-                                    }
-                                    // 배열로 온 연락처
-                                    else if (Array.isArray(response)) {
+                                    } else if (Array.isArray(response)) {
                                         value = response.map((item) => (typeof item === 'object' ? Object.values(item).join(' ') : String(item))).join(', ');
                                     } else {
                                         value = JSON.stringify(response);
@@ -146,16 +129,14 @@ export async function GET(request: NextRequest) {
             excelData.push(row);
         });
 
-        // 엑셀 워크북 생성 (컬럼 순서 지정)
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(excelData, {
-            header: columnHeaders, // 명시적으로 컬럼 순서 지정
+            header: columnHeaders,
         });
 
-        // 컬럼 너비 자동 조정 (정의된 헤더 순서대로)
+        // 컬럼 너비
         const colWidths: any[] = [];
         columnHeaders.forEach((header, index) => {
-            // 단계 구분자 컬럼은 더 넓게 설정
             if (header.includes('===') && header.includes('단계')) {
                 colWidths[index] = { wch: 15 };
             } else {
@@ -165,41 +146,53 @@ export async function GET(request: NextRequest) {
         });
         worksheet['!cols'] = colWidths;
 
-        // 단계 구분자 헤더 셀에 배경색 추가 (선택사항)
-        const headerRowIndex = 0;
-        columnHeaders.forEach((header, colIndex) => {
-            if (header.includes('===') && header.includes('단계')) {
-                const cellAddress = XLSX.utils.encode_cell({ r: headerRowIndex, c: colIndex });
-                if (!worksheet[cellAddress]) worksheet[cellAddress] = { t: 's', v: header };
-
-                // 셀 스타일 설정 (배경색)
-                worksheet[cellAddress].s = {
-                    fill: {
-                        fgColor: { rgb: 'FFE6F3FF' }, // 연한 파란색 배경
-                    },
-                    font: {
-                        bold: true,
-                        color: { rgb: 'FF0066CC' }, // 진한 파란색 글자
-                    },
-                    alignment: {
-                        horizontal: 'center',
-                    },
-                };
-            }
-        });
-
-        // 워크시트를 워크북에 추가
-        const portfolioTitle = submissions[0].portfolio?.title || '알 수 없음';
+        // 메인 시트 추가
         XLSX.utils.book_append_sheet(workbook, worksheet, '제출목록');
 
-        // 엑셀 파일을 버퍼로 생성
+        // ===== 🔥 추가: 객실 시트 만들기 =====
+        // 프론트에서 responses.rooms 로 넣어준 걸 여기서 꺼내서 펼친다
+        const roomRows: any[] = [];
+
+        submissions.forEach((submission, index) => {
+            const responses = JSON.parse(submission.responses || '{}');
+            const rooms = Array.isArray(responses.rooms) ? responses.rooms : [];
+
+            rooms.forEach((room: any, roomIdx: number) => {
+                roomRows.push({
+                    순번: index + 1,
+                    상호명: submission.companyName,
+                    객실번호: roomIdx + 1,
+                    객실명: room.name || '',
+                    '객실 설명': room.desc || '',
+                    형태: room.type || '',
+                });
+            });
+        });
+
+        if (roomRows.length > 0) {
+            const roomSheet = XLSX.utils.json_to_sheet(roomRows, {
+                header: ['순번', '상호명', '객실번호', '객실명', '객실 설명', '형태'],
+            });
+
+            roomSheet['!cols'] = [
+                { wch: 6 }, // 순번
+                { wch: 20 }, // 상호명
+                { wch: 8 }, // 객실번호
+                { wch: 25 }, // 객실명
+                { wch: 40 }, // 객실 설명
+                { wch: 25 }, // 형태
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, roomSheet, '객실목록');
+        }
+
+        // ===== 최종 응답 =====
+        const portfolioTitle = submissions[0].portfolio?.title || '알 수 없음';
         const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-        // 파일명 생성 (한글 포함)
         const fileName = `${portfolioTitle}_제출목록_${new Date().toISOString().split('T')[0]}.xlsx`;
         const encodedFileName = encodeURIComponent(fileName);
 
-        // 응답 헤더 설정
         const headers = new Headers();
         headers.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         headers.set('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
