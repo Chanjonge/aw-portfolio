@@ -21,8 +21,10 @@ export async function GET(request: NextRequest) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
 
+        let response: Response;
+
         try {
-            const response = await fetch(targetUrl, {
+            response = await fetch(targetUrl, {
                 signal: controller.signal,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -36,37 +38,6 @@ export async function GET(request: NextRequest) {
             });
 
             clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                let errorMessage = '';
-                switch (response.status) {
-                    case 404:
-                        errorMessage = '페이지를 찾을 수 없습니다. 웹사이트 주소가 변경되었거나 삭제되었을 수 있습니다.';
-                        break;
-                    case 403:
-                        errorMessage = '접근이 거부되었습니다. 웹사이트에서 외부 접근을 차단하고 있습니다.';
-                        break;
-                    case 500:
-                    case 502:
-                    case 503:
-                    case 504:
-                        errorMessage = '웹사이트 서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
-                        break;
-                    default:
-                        errorMessage = `웹사이트에 연결할 수 없습니다. (오류 코드: ${response.status})`;
-                }
-
-                return NextResponse.json(
-                    {
-                        error: errorMessage,
-                        details: `${response.status} ${response.statusText}`,
-                        originalUrl: targetUrl,
-                    },
-                    { status: response.status }
-                );
-            }
-
-            return response;
         } catch (fetchError) {
             clearTimeout(timeoutId);
 
@@ -82,6 +53,35 @@ export async function GET(request: NextRequest) {
             }
 
             throw fetchError;
+        }
+
+        if (!response.ok) {
+            let errorMessage = '';
+            switch (response.status) {
+                case 404:
+                    errorMessage = '페이지를 찾을 수 없습니다. 웹사이트 주소가 변경되었거나 삭제되었을 수 있습니다.';
+                    break;
+                case 403:
+                    errorMessage = '접근이 거부되었습니다. 웹사이트에서 외부 접근을 차단하고 있습니다.';
+                    break;
+                case 500:
+                case 502:
+                case 503:
+                case 504:
+                    errorMessage = '웹사이트 서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+                    break;
+                default:
+                    errorMessage = `웹사이트에 연결할 수 없습니다. (오류 코드: ${response.status})`;
+            }
+
+            return NextResponse.json(
+                {
+                    error: errorMessage,
+                    details: `${response.status} ${response.statusText}`,
+                    originalUrl: targetUrl,
+                },
+                { status: response.status }
+            );
         }
 
         const contentType = response.headers.get('content-type') || 'text/html';
