@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
 
         // 유효한 제출만 조회 (companyName이 있는 것만)
         const whereCondition: any = {
-            AND: [{ companyName: { not: null } }, { companyName: { not: '' } }],
+            companyName: {
+                not: '',
+            },
         };
 
         // portfolioId 필터링 추가

@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
         const allSubmissions = await prisma.formSubmission.findMany({
             where: {
                 companyName: companyName,
-                AND: [{ companyName: { not: null } }, { companyName: { not: '' } }],
             },
             include: {
                 portfolio: {

@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
                         questions: true,
                         submissions: {
                             where: {
-                                AND: [{ companyName: { not: null } }, { companyName: { not: '' } }],
+                                companyName: {
+                                    not: '',
+                                },
                             },
                         },
                     },
