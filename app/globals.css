@@ -123,3 +123,7 @@ input[type='text']:disabled {
 .max-w-8xl {
     max-width: 90rem;
 }
+
+.h-35 {
+    height: 35rem;
+}
