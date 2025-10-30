@@ -212,13 +212,30 @@ export default function Home() {
     };
 
     // 미리보기 열기 함수
-    const handlePreviewOpen = (domain: string, title: string) => {
+    const handlePreviewOpen = async (domain: string, title: string) => {
         setProxyError('');
         const proxyUrl = getProxyUrl(domain);
         setPreviewUrl(proxyUrl);
         setPreviewTitle(title);
         setPreviewMode('desktop');
         setShowPreview(true);
+
+        // HTTP 사이트인 경우 프록시 상태 미리 확인
+        try {
+            const url = new URL(domain);
+            if (url.protocol === 'http:') {
+                // 프록시 API 상태 확인 (헤드 요청)
+                const checkResponse = await fetch(proxyUrl, { method: 'HEAD' });
+                if (!checkResponse.ok) {
+                    const errorData = await fetch(proxyUrl)
+                        .then((r) => r.json())
+                        .catch(() => ({}));
+                    setProxyError(errorData.error || '웹사이트에 연결할 수 없습니다.');
+                }
+            }
+        } catch (error) {
+            console.error('Preview check error:', error);
+        }
     };
 
     return (
@@ -456,20 +473,45 @@ export default function Home() {
                         {/* iframe 컨텐츠 */}
                         <div className="flex-1 bg-white rounded-b-lg overflow-auto flex items-start justify-center">
                             {proxyError ? (
-                                <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg max-w-md">
-                                    <h3 className="text-lg font-semibold text-red-800 mb-2">미리보기 로드 실패</h3>
-                                    <p className="text-red-600 mb-4">{proxyError}</p>
-                                    <button
-                                        onClick={() => {
-                                            setProxyError('');
-                                            // 원본 URL로 새 창에서 열기
-                                            const originalUrl = new URLSearchParams(previewUrl.split('?')[1] || '').get('url') || previewUrl;
-                                            window.open(originalUrl, '_blank');
-                                        }}
-                                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
-                                    >
-                                        새 창에서 열기
-                                    </button>
+                                <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg max-w-lg mx-auto">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                    clipRule="evenodd"
+                                                />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-semibold text-red-800 mb-2">미리보기를 불러올 수 없습니다</h3>
+                                            <p className="text-red-700 mb-4 leading-relaxed">{proxyError}</p>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => {
+                                                        // 원본 URL로 새 창에서 열기
+                                                        const originalUrl = new URLSearchParams(previewUrl.split('?')[1] || '').get('url') || previewUrl;
+                                                        window.open(originalUrl, '_blank');
+                                                    }}
+                                                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all text-sm font-medium"
+                                                >
+                                                    새 창에서 열기
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setProxyError('');
+                                                        // 다시 시도
+                                                        const originalUrl = new URLSearchParams(previewUrl.split('?')[1] || '').get('url') || previewUrl;
+                                                        handlePreviewOpen(originalUrl, previewTitle);
+                                                    }}
+                                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all text-sm font-medium"
+                                                >
+                                                    다시 시도
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <div
@@ -488,7 +530,25 @@ export default function Home() {
                                         className={previewMode === 'mobile' ? 'w-[500px] h-full border-0' : 'w-full h-full border-0'}
                                         title={`${previewTitle} 미리보기`}
                                         sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                                        onError={() => setProxyError('사이트를 로드할 수 없습니다. 네트워크 연결을 확인해주세요.')}
+                                        onError={() => {
+                                            // iframe 로드 실패 시 프록시 API에서 상세 오류 정보 가져오기
+                                            if (previewUrl.includes('/api/proxy')) {
+                                                fetch(previewUrl)
+                                                    .then((response) => response.json())
+                                                    .then((data) => {
+                                                        if (data.error) {
+                                                            setProxyError(data.error);
+                                                        } else {
+                                                            setProxyError('사이트를 로드할 수 없습니다. 네트워크 연결을 확인해주세요.');
+                                                        }
+                                                    })
+                                                    .catch(() => {
+                                                        setProxyError('사이트를 로드할 수 없습니다. 네트워크 연결을 확인해주세요.');
+                                                    });
+                                            } else {
+                                                setProxyError('사이트를 로드할 수 없습니다. 네트워크 연결을 확인해주세요.');
+                                            }
+                                        }}
                                         onLoad={(e) => {
                                             const iframe = e.target as HTMLIFrameElement;
                                             try {
