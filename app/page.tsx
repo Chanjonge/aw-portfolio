@@ -51,6 +51,7 @@ export default function Home() {
     const [previewUrl, setPreviewUrl] = useState<string>('');
     const [previewTitle, setPreviewTitle] = useState<string>('');
     const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop'); // ⬅ 추가
+    const [proxyError, setProxyError] = useState<string>(''); // 프록시 오류 상태
 
     // ESC 키로 팝업 닫기 + 스크롤 잠금/복원
     useEffect(() => {
@@ -192,6 +193,32 @@ export default function Home() {
         setPassword('');
         setIsAuthenticated(false);
         setAuthError('');
+    };
+
+    // 프록시 URL 생성 함수
+    const getProxyUrl = (originalUrl: string) => {
+        try {
+            const url = new URL(originalUrl);
+            // HTTPS 사이트는 직접 사용
+            if (url.protocol === 'https:') {
+                return originalUrl;
+            }
+            // HTTP 사이트는 프록시를 통해 사용
+            return `/api/proxy?url=${encodeURIComponent(originalUrl)}`;
+        } catch (error) {
+            console.error('Invalid URL:', originalUrl);
+            return originalUrl;
+        }
+    };
+
+    // 미리보기 열기 함수
+    const handlePreviewOpen = (domain: string, title: string) => {
+        setProxyError('');
+        const proxyUrl = getProxyUrl(domain);
+        setPreviewUrl(proxyUrl);
+        setPreviewTitle(title);
+        setPreviewMode('desktop');
+        setShowPreview(true);
     };
 
     return (
@@ -341,10 +368,7 @@ export default function Home() {
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
-                                                    setPreviewUrl(portfolio.domain!);
-                                                    setPreviewTitle(portfolio.title);
-                                                    setPreviewMode('desktop'); // 초기값
-                                                    setShowPreview(true);
+                                                    handlePreviewOpen(portfolio.domain!, portfolio.title);
                                                 }}
                                                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all"
                                             >
@@ -431,24 +455,55 @@ export default function Home() {
 
                         {/* iframe 컨텐츠 */}
                         <div className="flex-1 bg-white rounded-b-lg overflow-auto flex items-start justify-center">
-                            <div
-                                className={`mt-4 mb-6 rounded-[12px] border border-gray-200 shadow-md overflow-hidden bg-white`}
-                                style={{
-                                    width: previewMode === 'mobile' ? '500px' : '100%',
-                                    maxWidth: previewMode === 'mobile' ? '500px' : '100%',
-                                    height: 'calc(100% - 2rem)',
-                                    transition: 'all 0.6s ease-in-out',
-                                    transform: previewMode === 'mobile' ? 'scale(1)' : 'scale(1)',
-                                }}
-                            >
-                                <iframe
-                                    key={`${previewMode}-${previewUrl}`} // 모드 전환 시 레이아웃 재계산
-                                    src={previewUrl}
-                                    className={previewMode === 'mobile' ? 'w-[500px] h-full border-0' : 'w-full h-full border-0'}
-                                    title={`${previewTitle} 미리보기`}
-                                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                                />
-                            </div>
+                            {proxyError ? (
+                                <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg max-w-md">
+                                    <h3 className="text-lg font-semibold text-red-800 mb-2">미리보기 로드 실패</h3>
+                                    <p className="text-red-600 mb-4">{proxyError}</p>
+                                    <button
+                                        onClick={() => {
+                                            setProxyError('');
+                                            // 원본 URL로 새 창에서 열기
+                                            const originalUrl = new URLSearchParams(previewUrl.split('?')[1] || '').get('url') || previewUrl;
+                                            window.open(originalUrl, '_blank');
+                                        }}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
+                                    >
+                                        새 창에서 열기
+                                    </button>
+                                </div>
+                            ) : (
+                                <div
+                                    className={`mt-4 mb-6 rounded-[12px] border border-gray-200 shadow-md overflow-hidden bg-white`}
+                                    style={{
+                                        width: previewMode === 'mobile' ? '500px' : '100%',
+                                        maxWidth: previewMode === 'mobile' ? '500px' : '100%',
+                                        height: 'calc(100% - 2rem)',
+                                        transition: 'all 0.6s ease-in-out',
+                                        transform: previewMode === 'mobile' ? 'scale(1)' : 'scale(1)',
+                                    }}
+                                >
+                                    <iframe
+                                        key={`${previewMode}-${previewUrl}`} // 모드 전환 시 레이아웃 재계산
+                                        src={previewUrl}
+                                        className={previewMode === 'mobile' ? 'w-[500px] h-full border-0' : 'w-full h-full border-0'}
+                                        title={`${previewTitle} 미리보기`}
+                                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                                        onError={() => setProxyError('사이트를 로드할 수 없습니다. 네트워크 연결을 확인해주세요.')}
+                                        onLoad={(e) => {
+                                            const iframe = e.target as HTMLIFrameElement;
+                                            try {
+                                                // iframe 로드 성공 확인
+                                                if (iframe.contentWindow) {
+                                                    setProxyError('');
+                                                }
+                                            } catch (error) {
+                                                // Cross-origin 오류는 정상적인 경우
+                                                setProxyError('');
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
