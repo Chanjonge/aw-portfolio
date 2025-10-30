@@ -132,10 +132,8 @@ export default function PortfolioForm() {
                     // 기존 제출 내역이 있으면 불러오기
                     setExistingSubmissionId(data.submission.id);
                     setFormData(data.submission.responses);
-                      setRooms(data.submission.responses?.rooms || []); // ✅ 추가
+                    setRooms(data.submission.responses?.rooms || []); // ✅ 추가
                     alert('기존 작성 내역을 불러왔습니다.');
-
-                    
                 }
             }
         } catch (error) {
@@ -170,6 +168,7 @@ export default function PortfolioForm() {
 
     const currentQuestions = questions.filter((q) => q.step === currentStep);
 
+    // 현재 단계의 질문들만 검증 (단계 이동 시 사용)
     const validateStep = (): boolean => {
         const newErrors: FormData = {};
         let isValid = true;
@@ -260,11 +259,110 @@ export default function PortfolioForm() {
         return isValid;
     };
 
-   const handleAddRoom = () => {
-  const newId = rooms.length + 2; // ✅ 2부터 시작
-  const newRoom = { id: newId, name: '', desc: '', type: '' };
-  setRooms((prev) => [...prev, newRoom]);
-};
+    // 모든 단계의 필수 질문들을 검증 (최종 제출 시 사용)
+    const validateAllSteps = (): boolean => {
+        const newErrors: FormData = {};
+        let isValid = true;
+        const missingSteps: number[] = [];
+
+        questions.forEach((question) => {
+            const value = formData[question.id];
+
+            // 필수 항목 체크
+            if (question.isRequired) {
+                let hasError = false;
+
+                // 파일 업로드는 URL이 있는지 확인
+                if (question.questionType === 'file') {
+                    if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+                        newErrors[question.id] = '파일을 업로드해주세요.';
+                        hasError = true;
+                    }
+                }
+                // 체크박스는 다중/단일 선택에 따라 확인
+                else if (question.questionType === 'checkbox') {
+                    if (!value || typeof value !== 'object') {
+                        newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                        hasError = true;
+                    } else {
+                        try {
+                            const options = JSON.parse(question.options || '{}');
+                            const isMultiple = options.multiple !== false;
+
+                            if (isMultiple) {
+                                if (!('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
+                                    newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                                    hasError = true;
+                                }
+                            } else {
+                                if (!('selected' in value) || !(value as any).selected) {
+                                    newErrors[question.id] = '하나를 선택해주세요.';
+                                    hasError = true;
+                                }
+                            }
+                        } catch {
+                            if (!('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
+                                newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                                hasError = true;
+                            }
+                        }
+                    }
+                }
+                // 반복 필드는 배열에 데이터가 있는지 확인
+                else if (question.questionType === 'repeatable') {
+                    if (!value || !Array.isArray(value) || value.length === 0) {
+                        newErrors[question.id] = '최소 하나 이상 입력해주세요.';
+                        hasError = true;
+                    }
+                }
+                // 동의 체크박스는 agreed 값 확인
+                else if (question.questionType === 'agreement') {
+                    if (!value || !value.agreed) {
+                        newErrors[question.id] = '안내사항에 동의해주세요.';
+                        hasError = true;
+                    }
+                }
+                // 텍스트 필드는 문자열 길이 확인
+                else {
+                    if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+                        newErrors[question.id] = '이 항목은 필수입니다.';
+                        hasError = true;
+                    }
+                }
+
+                // 오류가 있는 질문의 단계를 기록
+                if (hasError && !missingSteps.includes(question.step)) {
+                    missingSteps.push(question.step);
+                    isValid = false;
+                }
+            }
+
+            // 최소 글자 수 체크
+            if (question.requireMinLength && (question.questionType === 'text' || question.questionType === 'textarea') && typeof value === 'string' && value.trim().length > 0 && value.trim().length < question.minLength) {
+                newErrors[question.id] = `최소 ${question.minLength}자 이상 입력해주세요.`;
+                if (!missingSteps.includes(question.step)) {
+                    missingSteps.push(question.step);
+                }
+                isValid = false;
+            }
+        });
+
+        setErrors(newErrors);
+
+        // 누락된 단계가 있으면 사용자에게 알림
+        if (!isValid && missingSteps.length > 0) {
+            const sortedSteps = missingSteps.sort((a, b) => a - b);
+            alert(`${sortedSteps.join(', ')}단계에 미완성된 필수 항목이 있습니다.\n해당 단계로 이동하여 모든 필수 항목을 완성해주세요.`);
+        }
+
+        return isValid;
+    };
+
+    const handleAddRoom = () => {
+        const newId = rooms.length + 2; // ✅ 2부터 시작
+        const newRoom = { id: newId, name: '', desc: '', type: '' };
+        setRooms((prev) => [...prev, newRoom]);
+    };
     const handleNext = async () => {
         // 질문 단계 검증 후 다음 단계로
         if (validateStep()) {
@@ -294,14 +392,14 @@ export default function PortfolioForm() {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                   portfolioId: portfolio.id,
-  companyName,
-  password,
-  responses: {
-    ...formData,
-    rooms, // ✅ 객실 데이터 포함
-  },
-  isDraft: false,
+                    portfolioId: portfolio.id,
+                    companyName,
+                    password,
+                    responses: {
+                        ...formData,
+                        rooms, // ✅ 객실 데이터 포함
+                    },
+                    isDraft: false,
                 }),
             });
 
@@ -324,7 +422,7 @@ export default function PortfolioForm() {
     };
 
     const handleSubmit = async () => {
-        if (!validateStep() || !portfolio) return;
+        if (!validateAllSteps() || !portfolio) return;
 
         setSubmitting(true);
         try {
@@ -335,13 +433,13 @@ export default function PortfolioForm() {
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({
-  portfolioId: portfolio.id,
-  companyName,
-  password,
-  responses: formData,
-  isDraft: false,
-}),
+                body: JSON.stringify({
+                    portfolioId: portfolio.id,
+                    companyName,
+                    password,
+                    responses: formData,
+                    isDraft: false,
+                }),
             });
 
             if (response.ok) {
@@ -459,138 +557,119 @@ export default function PortfolioForm() {
                             <p className="text-gray-600">{currentStep === 0 ? '다음 단계로 진행하기 전에 안내사항을 확인해주세요.' : '모든 필수 항목을 작성해주세요.'}</p>
                         </div>
 
-                       {/* Questions - 스크롤 가능 영역 */}
-<div className="pr-2 space-y-8">
-  {currentQuestions.length === 0 ? (
-    <div className="text-center py-8 text-gray-500">이 단계에는 질문이 없습니다.</div>
-  ) : (
-    currentQuestions.map((question) => (
-      <DynamicFormField
-        key={question.id}
-        question={{
-          ...question,
-          questionType: question.questionType || 'text',
-        }}
-        value={formData[question.id]}
-        onChange={(value) => handleChange(question.id, value)}
-        error={errors[question.id]}
-      />
-    ))
-  )}
+                        {/* Questions - 스크롤 가능 영역 */}
+                        <div className="pr-2 space-y-8">
+                            {currentQuestions.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">이 단계에는 질문이 없습니다.</div>
+                            ) : (
+                                currentQuestions.map((question) => (
+                                    <DynamicFormField
+                                        key={question.id}
+                                        question={{
+                                            ...question,
+                                            questionType: question.questionType || 'text',
+                                        }}
+                                        value={formData[question.id]}
+                                        onChange={(value) => handleChange(question.id, value)}
+                                        error={errors[question.id]}
+                                    />
+                                ))
+                            )}
 
-  {/* ✅ 객실 입력 영역 (5단계 전용) */}
-  {currentStep === 5 && (
-    <div className="mt-6 space-y-8">
-      {rooms.map((room, index) => (
-        <div key={room.id} className="p-4 border rounded-lg space-y-4">
-          <div>
-            <label className="block font-semibold mb-1">객실명 {index + 1}</label>
-            <input
-              type="text"
-              value={room.name}
-              onChange={(e) => {
-                const updated = [...rooms];
-                updated[index].name = e.target.value;
-                setRooms(updated);
-              }}
-              className="w-full border border-gray-300 rounded-lg p-2"
-              placeholder={`객실${index + 1} 이름을 입력해주세요.`}
-            />
-          </div>
+                            {/* ✅ 객실 입력 영역 (5단계 전용) */}
+                            {currentStep === 5 && (
+                                <div className="mt-6 space-y-8">
+                                    {rooms.map((room, index) => (
+                                        <div key={room.id} className="p-4 border rounded-lg space-y-4">
+                                            <div>
+                                                <label className="block font-semibold mb-1">객실명 {index + 1}</label>
+                                                <input
+                                                    type="text"
+                                                    value={room.name}
+                                                    onChange={(e) => {
+                                                        const updated = [...rooms];
+                                                        updated[index].name = e.target.value;
+                                                        setRooms(updated);
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                    placeholder={`객실${index + 1} 이름을 입력해주세요.`}
+                                                />
+                                            </div>
 
-          <div>
-            <label className="block font-semibold mb-1">객실 설명 {index + 1}</label>
-            <textarea
-              value={room.desc}
-              onChange={(e) => {
-                const updated = [...rooms];
-                updated[index].desc = e.target.value;
-                setRooms(updated);
-              }}
-              className="w-full border border-gray-300 rounded-lg p-2"
-              rows={3}
-              placeholder={`객실${index + 1} 설명을 입력해주세요.`}
-            />
-          </div>
+                                            <div>
+                                                <label className="block font-semibold mb-1">객실 설명 {index + 1}</label>
+                                                <textarea
+                                                    value={room.desc}
+                                                    onChange={(e) => {
+                                                        const updated = [...rooms];
+                                                        updated[index].desc = e.target.value;
+                                                        setRooms(updated);
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                    rows={3}
+                                                    placeholder={`객실${index + 1} 설명을 입력해주세요.`}
+                                                />
+                                            </div>
 
-          <div>
-            <label className="block font-semibold mb-1">형태 {index + 1}</label>
-            <input
-              type="text"
-              value={room.type}
-              onChange={(e) => {
-                const updated = [...rooms];
-                updated[index].type = e.target.value;
-                setRooms(updated);
-              }}
-              className="w-full border border-gray-300 rounded-lg p-2"
-              placeholder={`예: 침실1 + 거실1 + 화장실1`}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+                                            <div>
+                                                <label className="block font-semibold mb-1">형태 {index + 1}</label>
+                                                <input
+                                                    type="text"
+                                                    value={room.type}
+                                                    onChange={(e) => {
+                                                        const updated = [...rooms];
+                                                        updated[index].type = e.target.value;
+                                                        setRooms(updated);
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                    placeholder={`예: 침실1 + 거실1 + 화장실1`}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                  {/* Navigation Buttons */}
-<div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
+                    {/* Navigation Buttons */}
+                    <div className="flex justify-between items-center mt-8 pt-6 border-t-2 border-gray-200">
+                        {/* 왼쪽 버튼 그룹 */}
+                        <div className="flex items-center gap-4">
+                            {/* 이전 버튼 */}
+                            <button
+                                onClick={handlePrevious}
+                                disabled={currentStep === minStep}
+                                className={`px-6 py-3 rounded-lg font-semibold transition-all ${currentStep === minStep ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'}`}
+                            >
+                                이전
+                            </button>
 
-  {/* 왼쪽 버튼 그룹 */}
-  <div className="flex items-center gap-4">
-    {/* 이전 버튼 */}
-    <button
-      onClick={handlePrevious}
-      disabled={currentStep === minStep}
-      className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-        currentStep === minStep
-          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          : 'bg-white text-black border-2 border-black hover:bg-black hover:text-white'
-      }`}
-    >
-      이전
-    </button>
+                            {/* ✅ 5단계일 때만 객실 추가 버튼 */}
+                            {currentStep === 5 && (
+                                <button onClick={handleAddRoom} className="px-6 py-3 bg-gray-100 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
+                                    객실 추가
+                                </button>
+                            )}
+                        </div>
 
-    {/* ✅ 5단계일 때만 객실 추가 버튼 */}
-    {currentStep === 5 && (
-      <button
-        onClick={handleAddRoom}
-        className="px-6 py-3 bg-gray-100 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all"
-      >
-        객실 추가
-      </button>
-    )}
-  </div>
+                        {/* 오른쪽 버튼 그룹 */}
+                        <div className="flex gap-3">
+                            <button onClick={handleSaveDraft} disabled={submitting} className="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50">
+                                💾 임시저장
+                            </button>
 
-  {/* 오른쪽 버튼 그룹 */}
-  <div className="flex gap-3">
-    <button
-      onClick={handleSaveDraft}
-      disabled={submitting}
-      className="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:border-black transition-all disabled:opacity-50"
-    >
-      💾 임시저장
-    </button>
-
-    {currentStep < maxStep ? (
-      <button
-        onClick={handleNext}
-        className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all"
-      >
-        {currentStep === 0 ? '시작하기' : '다음'}
-      </button>
-    ) : (
-      <button
-        onClick={handleSubmit}
-        disabled={submitting}
-        className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
-        {submitting ? '제출 중...' : '제출하기'}
-      </button>
-    )}
-  </div>
-</div>
+                            {currentStep < maxStep ? (
+                                <button onClick={handleNext} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                                    {currentStep === 0 ? '시작하기' : '다음'}
+                                </button>
+                            ) : (
+                                <button onClick={handleSubmit} disabled={submitting} className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    {submitting ? '제출 중...' : '제출하기'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Back to Home */}
@@ -613,4 +692,3 @@ export default function PortfolioForm() {
         </div>
     );
 }
-
