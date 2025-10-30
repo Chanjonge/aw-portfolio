@@ -42,8 +42,7 @@ export default function PortfolioForm() {
     const [errors, setErrors] = useState<FormData>({});
 
     // ✅ 객실: 처음에 1개 기본 제공
-    const [rooms, setRooms] = useState<Array<{ id: string; name: string; desc: string; type: string }>>([{ id: 'room-1', name: '', desc: '', type: '' }]);
-
+    const [rooms, setRooms] = useState<Array<{ id: string; name: string; desc: string; type: string; price: string }>>([{ id: 'room-1', name: '', desc: '', type: '', price: '' }]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [userRole, setUserRole] = useState<string>('');
@@ -149,10 +148,11 @@ export default function PortfolioForm() {
                                 name: r.name || '',
                                 desc: r.desc || '',
                                 type: r.type || '',
+                                price: r.price || '', // ✅ 요금도 불러오기
                             }))
                         );
                     } else {
-                        setRooms([{ id: 'room-1', name: '', desc: '', type: '' }]);
+                        setRooms([{ id: 'room-1', name: '', desc: '', type: '', price: '' }]); // ✅ 기본에도 price
                     }
 
                     alert('기존 작성 내역을 불러왔습니다.');
@@ -404,6 +404,7 @@ export default function PortfolioForm() {
                 name: '',
                 desc: '',
                 type: '',
+                price: '',
             },
         ]);
     };
@@ -695,6 +696,19 @@ export default function PortfolioForm() {
                                                     }}
                                                     className="w-full border border-gray-300 rounded-lg p-2"
                                                     placeholder="예: 침실1 + 거실1 + 화장실1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block font-semibold mb-1">요금</label>
+                                                <input
+                                                    type="text"
+                                                    value={room.price}
+                                                    onChange={(e) => {
+                                                        const updated = rooms.map((r) => (r.id === room.id ? { ...r, price: e.target.value } : r));
+                                                        setRooms(updated);
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-lg p-2"
+                                                    placeholder="예: 비수기(주중/주말) : 100,000 / 200,000"
                                                 />
                                             </div>
                                         </div>

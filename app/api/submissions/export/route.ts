@@ -5,7 +5,6 @@ import * as XLSX from 'xlsx';
 
 export async function GET(request: NextRequest) {
     try {
-        // 1. 토큰 검사
         const token = request.headers.get('authorization')?.replace('Bearer ', '');
         if (!token) {
             return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
@@ -16,19 +15,20 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 403 });
         }
 
-        // 2. 파라미터
         const { searchParams } = new URL(request.url);
         const portfolioId = searchParams.get('portfolioId');
         if (!portfolioId) {
             return NextResponse.json({ error: '포트폴리오 ID가 필요합니다.' }, { status: 400 });
         }
 
-        // 3. 제출 데이터 조회
+        // 1) 제출 데이터
         const submissions = await prisma.formSubmission.findMany({
             where: {
                 portfolioId,
                 isDraft: false,
-                companyName: { not: '' },
+                companyName: {
+                    not: '',
+                },
             },
             include: {
                 portfolio: {
@@ -47,20 +47,19 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: '해당 포트폴리오에 제출 데이터가 없습니다.' }, { status: 404 });
         }
 
-        // 4. 질문 정보 조회
+        // 2) 질문 데이터
         const questions = await prisma.question.findMany({
             where: { portfolioId },
             orderBy: [{ step: 'asc' }, { order: 'asc' }],
         });
 
-        // step별 그룹
         const questionsByStep = questions.reduce((groups: { [key: number]: any[] }, q) => {
             if (!groups[q.step]) groups[q.step] = [];
             groups[q.step].push(q);
             return groups;
         }, {});
 
-        // 5. 먼저 모든 제출을 훑어서 rooms 최대 개수 구함
+        // 3) rooms 최대 개수 구하기
         let maxRooms = 0;
         submissions.forEach((submission) => {
             const responses = JSON.parse(submission.responses || '{}');
@@ -68,61 +67,67 @@ export async function GET(request: NextRequest) {
             if (rooms.length > maxRooms) maxRooms = rooms.length;
         });
 
-        // 6. 엑셀 헤더 만들기
-        // 기본
+        // 4) 헤더 만들기
         const columnHeaders: string[] = ['순번', '상호명'];
 
-        // 질문들 먼저 넣기
+        // (1) 질문 헤더
         Object.keys(questionsByStep)
             .sort((a, b) => parseInt(a) - parseInt(b))
             .forEach((step) => {
                 questionsByStep[parseInt(step)]
                     .sort((a, b) => a.order - b.order)
                     .forEach((question) => {
-                        // 파일 질문은 제외
                         if (question.questionType === 'file') return;
                         columnHeaders.push(question.title);
                     });
             });
 
-        // 🔥 객실 헤더를 '객실명' 바로 뒤에 끼워 넣기
-        // maxRooms가 1이면(객실1만 있으면) 안 넣어도 됨. 2개 이상일 때만 추가
+        // (2) 객실 확장 헤더
+        // 기본적으로 질문 안에 '객실명', '객실 설명', '형태' 가 있다고 가정
+        // 여기 바로 뒤에 '요금' 을 넣고, 그 다음 객실2...를 붙임
         const extraRoomHeaders: string[] = [];
         for (let i = 2; i <= maxRooms; i++) {
             extraRoomHeaders.push(`객실${i}명`);
             extraRoomHeaders.push(`객실${i}설명`);
             extraRoomHeaders.push(`객실${i}형태`);
+            extraRoomHeaders.push(`객실${i}요금`);
         }
 
-        if (extraRoomHeaders.length > 0) {
-            // ✅ 기준 컬럼들 위치 찾기
-            const roomNameIdx = columnHeaders.findIndex((h) => h === '객실명');
-            const roomDescIdx = columnHeaders.findIndex((h) => h === '객실 설명');
-            const roomTypeIdx = columnHeaders.findIndex((h) => h === '형태');
+        // 기준 컬럼 위치 찾기
+        const roomNameIdx = columnHeaders.findIndex((h) => h === '객실명');
+        const roomDescIdx = columnHeaders.findIndex((h) => h === '객실 설명');
+        const roomTypeIdx = columnHeaders.findIndex((h) => h === '형태');
 
-            // 우리가 기대하는 형태: 객실명 -> 객실 설명 -> 형태
-            const hasRoomBase = roomNameIdx !== -1 && roomDescIdx !== -1 && roomTypeIdx !== -1 && roomNameIdx < roomDescIdx && roomDescIdx < roomTypeIdx;
+        const hasRoomBase = roomNameIdx !== -1 && roomDescIdx !== -1 && roomTypeIdx !== -1 && roomNameIdx < roomDescIdx && roomDescIdx < roomTypeIdx;
 
-            if (hasRoomBase) {
-                // ✅ '형태' 바로 다음 위치에 추가 객실들 끼워넣기
-                columnHeaders.splice(roomTypeIdx + 1, 0, ...extraRoomHeaders);
-            } else {
-                // 만약 위 3개가 연속이 아니면 그냥 뒤에 붙임
-                columnHeaders.push(...extraRoomHeaders);
+        if (hasRoomBase) {
+            // ✅ 1번 객실의 '형태' 바로 뒤에 '요금' 을 먼저 끼운다
+            columnHeaders.splice(roomTypeIdx + 1, 0, '요금');
+
+            // 그리고 그 다음에 객실2~N 삽입
+            if (extraRoomHeaders.length > 0) {
+                // '형태' 하나 넣으면서 인덱스가 1 증가했으니 다시 위치 재계산
+                const newRoomTypeIdx = columnHeaders.findIndex((h) => h === '형태');
+                const insertPos = newRoomTypeIdx + 2; // 형태 다음(요금 다음) 위치
+                columnHeaders.splice(insertPos, 0, ...extraRoomHeaders);
             }
+        } else {
+            // 객실 관련 3개가 연속이 아니면 그냥 뒤에 붙임
+            columnHeaders.push('요금');
+            columnHeaders.push(...extraRoomHeaders);
         }
-        // 7. 행 데이터 만들기
+
+        // 5) 행 데이터 만들기
         const excelData: any[] = [];
 
         submissions.forEach((submission, index) => {
             const responses = JSON.parse(submission.responses || '{}');
             const row: any = {};
 
-            // 기본
             row['순번'] = index + 1;
             row['상호명'] = submission.companyName;
 
-            // 질문 응답
+            // (1) 질문 응답
             Object.keys(questionsByStep)
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .forEach((step) => {
@@ -138,7 +143,6 @@ export async function GET(request: NextRequest) {
                                 if (question.questionType === 'checkbox' && Array.isArray(response)) {
                                     value = response.join(', ');
                                 } else if (typeof response === 'object') {
-                                    // 체크박스 + 입력 조합
                                     if (Array.isArray(response.checked) || response.inputs) {
                                         const checked = Array.isArray(response.checked) ? response.checked.join(', ') : '';
                                         const inputs =
@@ -148,9 +152,7 @@ export async function GET(request: NextRequest) {
                                                       .join(', ')
                                                 : '';
                                         value = [checked, inputs].filter(Boolean).join(' / ');
-                                    }
-                                    // 배열형 응답
-                                    else if (Array.isArray(response)) {
+                                    } else if (Array.isArray(response)) {
                                         value = response.map((item) => (typeof item === 'object' ? Object.values(item).join(' ') : String(item))).join(', ');
                                     } else {
                                         value = JSON.stringify(response);
@@ -164,28 +166,37 @@ export async function GET(request: NextRequest) {
                         });
                 });
 
-            // 🔥 객실 데이터 채우기
+            // (2) 객실 데이터
             const rooms = Array.isArray(responses.rooms) ? responses.rooms : [];
 
-            // 객실1은 폼 질문으로 이미 들어가 있을 가능성이 높으니
-            // 2번부터 maxRooms까지 채운다
+            // 객실1 요금
+            // 만약 프론트에서 rooms[0].price 로 저장했다면 여기서 읽힘
+            // 질문으로 '요금'이 이미 있었다면 그 값이 우선이겠지만, 여기서도 한 번 더 덮어써줄 수 있음
+            if (rooms[0]) {
+                row['요금'] = rooms[0].price || '';
+            } else {
+                row['요금'] = row['요금'] || '';
+            }
+
+            // 객실2~N
             for (let i = 2; i <= maxRooms; i++) {
-                const room = rooms[i - 1] || {}; // rooms[0] = 객실1, rooms[1] = 객실2 ...
+                const room = rooms[i - 1] || {};
                 row[`객실${i}명`] = room.name || '';
                 row[`객실${i}설명`] = room.desc || '';
                 row[`객실${i}형태`] = room.type || '';
+                row[`객실${i}요금`] = room.price || '';
             }
 
             excelData.push(row);
         });
 
-        // 8. 워크북/시트 생성
+        // 6) 워크북/시트 생성
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(excelData, {
             header: columnHeaders,
         });
 
-        // 9. 컬럼 너비 설정
+        // 7) 컬럼 너비
         const colWidths: any[] = [];
         columnHeaders.forEach((header, index) => {
             const maxLength = Math.max(header.length, ...excelData.map((row) => String(row[header] || '').length));
@@ -193,14 +204,12 @@ export async function GET(request: NextRequest) {
         });
         worksheet['!cols'] = colWidths;
 
-        // 10. 시트 추가
+        // 8) 시트 추가
         const portfolioTitle = submissions[0].portfolio?.title || '알 수 없음';
         XLSX.utils.book_append_sheet(workbook, worksheet, '제출목록');
 
-        // 11. 버퍼로 변환
+        // 9) 파일로 반환
         const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-
-        // 12. 응답
         const fileName = `${portfolioTitle}_제출목록_${new Date().toISOString().split('T')[0]}.xlsx`;
         const encodedFileName = encodeURIComponent(fileName);
 
