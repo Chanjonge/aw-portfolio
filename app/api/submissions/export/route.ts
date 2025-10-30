@@ -73,12 +73,12 @@ export async function GET(request: NextRequest) {
             .sort((a, b) => parseInt(a) - parseInt(b))
             .forEach((step) => {
                 // 단계 구분자 추가 (예: "=== 1단계 ===")
-                columnHeaders.push(`=== ${step}단계 ===`);
 
                 // 해당 단계의 질문들 추가
                 questionsByStep[parseInt(step)]
                     .sort((a, b) => a.order - b.order)
                     .forEach((question) => {
+                        if (question.questionType === 'file') return;
                         columnHeaders.push(question.title);
                     });
             });
@@ -101,12 +101,13 @@ export async function GET(request: NextRequest) {
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .forEach((step) => {
                     // 단계 구분자 컬럼에는 빈 값 추가
-                    row[`=== ${step}단계 ===`] = '';
+                    // row[`=== ${step}단계 ===`] = '';
 
                     // 해당 단계의 질문들에 대한 응답 추가
                     questionsByStep[parseInt(step)]
                         .sort((a, b) => a.order - b.order)
                         .forEach((question) => {
+                            if (question.questionType === 'file') return;
                             const response = responses[question.id];
                             let value = '';
 
@@ -116,7 +117,23 @@ export async function GET(request: NextRequest) {
                                 } else if (question.questionType === 'file' && Array.isArray(response)) {
                                     value = response.map((file: any) => file.name || file).join(', ');
                                 } else if (typeof response === 'object') {
-                                    value = JSON.stringify(response);
+                                    // 체크박스+입력 형태
+                                    if (Array.isArray(response.checked) || response.inputs) {
+                                        const checked = Array.isArray(response.checked) ? response.checked.join(', ') : '';
+                                        const inputs =
+                                            response.inputs && Object.keys(response.inputs).length > 0
+                                                ? Object.entries(response.inputs)
+                                                      .map(([k, v]) => `${k}: ${v}`)
+                                                      .join(', ')
+                                                : '';
+                                        value = [checked, inputs].filter(Boolean).join(' / ');
+                                    }
+                                    // 배열로 온 연락처
+                                    else if (Array.isArray(response)) {
+                                        value = response.map((item) => (typeof item === 'object' ? Object.values(item).join(' ') : String(item))).join(', ');
+                                    } else {
+                                        value = JSON.stringify(response);
+                                    }
                                 } else {
                                     value = String(response);
                                 }

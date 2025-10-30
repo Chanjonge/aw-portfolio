@@ -73,15 +73,19 @@ export default function PortfolioForm() {
         }
 
         // localStorage에서 인증 정보 가져오기
-        const localCompany = localStorage.getItem('companyName');
-        const localPassword = localStorage.getItem('password');
-        if (localCompany && localPassword) {
-            setCompanyName(localCompany);
-            setPassword(localPassword);
-            // 자동으로 기존 제출 내역 확인
-            setTimeout(() => {
-                checkExistingSubmission(localCompany, localPassword);
-            }, 1000);
+        const portfolioAuth = localStorage.getItem('portfolio_auth');
+        if (portfolioAuth) {
+            try {
+                const authData = JSON.parse(portfolioAuth);
+                setCompanyName(authData.companyName);
+                setPassword(authData.password);
+                // 자동으로 기존 제출 내역 확인
+                setTimeout(() => {
+                    checkExistingSubmission(authData.companyName, authData.password);
+                }, 1000);
+            } catch (error) {
+                console.error('Failed to parse portfolio auth:', error);
+            }
         }
 
         fetchPortfolioAndQuestions();
@@ -172,6 +176,11 @@ export default function PortfolioForm() {
     const validateStep = (): boolean => {
         const newErrors: FormData = {};
         let isValid = true;
+
+        // 0단계: 안내사항만 있으므로 바로 통과
+        if (currentStep === 0) {
+            return true;
+        }
 
         currentQuestions.forEach((question) => {
             const value = formData[question.id];
@@ -264,6 +273,16 @@ export default function PortfolioForm() {
         const newErrors: FormData = {};
         let isValid = true;
         const missingSteps: number[] = [];
+
+        // 상호명과 비밀번호 검증
+        if (!companyName.trim()) {
+            alert('상호명(회사명)을 입력해주세요.');
+            return false;
+        }
+        if (!password.trim()) {
+            alert('비밀번호를 입력해주세요.');
+            return false;
+        }
 
         questions.forEach((question) => {
             const value = formData[question.id];
