@@ -71,9 +71,9 @@ export async function GET(request: NextRequest) {
                 let value = '';
 
                 if (response !== undefined && response !== null) {
-                    if (question.type === 'checkbox' && Array.isArray(response)) {
+                    if (question.questionType === 'checkbox' && Array.isArray(response)) {
                         value = response.join(', ');
-                    } else if (question.type === 'file' && Array.isArray(response)) {
+                    } else if (question.questionType === 'file' && Array.isArray(response)) {
                         value = response.map((file: any) => file.name || file).join(', ');
                     } else if (typeof response === 'object') {
                         value = JSON.stringify(response);
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
                     }
                 }
 
-                row[question.label] = value;
+                row[question.title] = value;
             });
 
             excelData.push(row);
