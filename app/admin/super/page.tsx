@@ -257,6 +257,38 @@ export default function SuperAdminPage() {
         }
     };
 
+    // 엑셀 다운로드 함수
+    const downloadExcel = async (portfolioId: string, portfolioTitle: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/submissions/export?portfolioId=${portfolioId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(errorData.error || '엑셀 다운로드에 실패했습니다.');
+                return;
+            }
+
+            // 파일 다운로드
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${portfolioTitle}_제출목록_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Excel download error:', error);
+            alert('엑셀 다운로드 중 오류가 발생했습니다.');
+        }
+    };
+
     const fetchCategories = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -608,7 +640,7 @@ export default function SuperAdminPage() {
                         <button onClick={() => setActiveTab('users')} className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'users' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}>
                             사용자 관리
                         </button>
-                        {/* <button
+                        <button
                             onClick={() => {
                                 setActiveTab('submissions');
                                 fetchSubmissions();
@@ -616,7 +648,7 @@ export default function SuperAdminPage() {
                             className={`py-4 px-2 font-semibold border-b-4 transition-all ${activeTab === 'submissions' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
                         >
                             제출 목록
-                        </button> */}
+                        </button>
                         <button
                             onClick={() => {
                                 setActiveTab('categories');
@@ -1413,9 +1445,11 @@ export default function SuperAdminPage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold">제출 목록</h2>
-                        <button onClick={fetchSubmissions} className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
-                            🔄 새로고침
-                        </button>
+                        <div className="flex gap-3">
+                            <button onClick={fetchSubmissions} className="px-4 py-2 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
+                                🔄 새로고침
+                            </button>
+                        </div>
                     </div>
 
                     {submissions.length === 0 ? (
@@ -1425,89 +1459,113 @@ export default function SuperAdminPage() {
                             <p className="text-gray-600">사용자가 포트폴리오를 제출하면 여기에 표시됩니다</p>
                         </div>
                     ) : (
-                        <div className="bg-white border-2 border-black rounded-lg overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-gray-50 border-b-2 border-black">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">상호명</th>
-                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">비밀번호</th>
-                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">포트폴리오</th>
-                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">상태</th>
-                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">제출일</th>
-                                            <th className="px-6 py-4 text-left text-sm font-bold text-black">작업</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                        {submissions.map((submission) => (
-                                            <tr key={submission.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 text-sm font-semibold text-black">{submission.companyName}</td>
-                                                <td className="px-6 py-4 text-sm font-mono text-gray-700">
-                                                    <span className="px-2 py-1 bg-gray-100 rounded">{submission.password.slice(0, 10)}...</span>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">{submission.portfolio.title}</td>
-                                                <td className="px-6 py-4 text-sm">
-                                                    {submission.isDraft ? <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">임시저장</span> : <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">제출완료</span>}
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">
-                                                    {new Date(submission.isDraft ? submission.updatedAt : submission.completedAt).toLocaleDateString('ko-KR', {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                    })}
-                                                </td>
-                                                <td className="px-6 py-4 text-sm">
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                const responseText = Object.entries(submission.responses)
-                                                                    .map(([key, value]) => `${key}: ${value}`)
-                                                                    .join('\n\n');
-                                                                alert(`제출 내용:\n\n${responseText}`);
-                                                            }}
-                                                            className="text-black font-semibold hover:underline"
-                                                        >
-                                                            상세보기
-                                                        </button>
-                                                        <button
-                                                            onClick={async () => {
-                                                                if (confirm('이 제출을 삭제하시겠습니까?')) {
-                                                                    try {
-                                                                        const token = localStorage.getItem('token');
-                                                                        const response = await fetch(`/api/submissions/${submission.id}`, {
-                                                                            method: 'DELETE',
-                                                                            headers: {
-                                                                                Authorization: `Bearer ${token}`,
-                                                                            },
-                                                                        });
+                        <div className="space-y-6">
+                            {/* 포트폴리오별로 그룹화 */}
+                            {Object.entries(
+                                submissions.reduce((groups: any, submission) => {
+                                    const portfolioId = submission.portfolioId;
+                                    const portfolioTitle = submission.portfolio?.title || '알 수 없음';
+                                    const key = `${portfolioId}-${portfolioTitle}`;
 
-                                                                        if (response.ok) {
-                                                                            alert('삭제되었습니다.');
-                                                                            fetchSubmissions();
-                                                                        } else {
-                                                                            const data = await response.json();
-                                                                            alert(data.error || '삭제 실패');
+                                    if (!groups[key]) {
+                                        groups[key] = {
+                                            portfolioId,
+                                            portfolioTitle,
+                                            submissions: [],
+                                        };
+                                    }
+                                    groups[key].submissions.push(submission);
+                                    return groups;
+                                }, {})
+                            ).map(([key, group]: [string, any]) => (
+                                <div key={key} className="bg-white border-2 border-black rounded-lg overflow-hidden">
+                                    {/* 포트폴리오 헤더 */}
+                                    <div className="bg-gray-50 px-6 py-4 border-b-2 border-gray-200 flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-black">{group.portfolioTitle}</h3>
+                                            <p className="text-sm text-gray-600">
+                                                총 {group.submissions.length}건 (완료: {group.submissions.filter((s: any) => !s.isDraft).length}건, 임시저장: {group.submissions.filter((s: any) => s.isDraft).length}건)
+                                            </p>
+                                        </div>
+                                        <button onClick={() => downloadExcel(group.portfolioId, group.portfolioTitle)} className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all flex items-center gap-2">
+                                            📊 엑셀 다운로드
+                                        </button>
+                                    </div>
+
+                                    {/* 제출목록 테이블 */}
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead className="bg-gray-100 border-b border-gray-200">
+                                                <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상호명</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제출일시</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {group.submissions.map((submission: any) => (
+                                                    <tr key={submission.id} className="hover:bg-gray-50">
+                                                        <td className="px-6 py-4 text-sm font-semibold text-black">{submission.companyName}</td>
+                                                        <td className="px-6 py-4 text-sm">
+                                                            {submission.isDraft ? <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">임시저장</span> : <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">제출완료</span>}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-gray-900">{new Date(submission.isDraft ? submission.updatedAt : submission.completedAt).toLocaleString('ko-KR')}</td>
+                                                        <td className="px-6 py-4 text-sm">
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const responseText = Object.entries(submission.responses)
+                                                                            .map(([key, value]) => `${key}: ${value}`)
+                                                                            .join('\n\n');
+                                                                        alert(`제출 내용:\n\n${responseText}`);
+                                                                    }}
+                                                                    className="text-blue-600 hover:text-blue-900 font-semibold"
+                                                                >
+                                                                    상세보기
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (confirm('이 제출을 삭제하시겠습니까?')) {
+                                                                            try {
+                                                                                const token = localStorage.getItem('token');
+                                                                                const response = await fetch(`/api/submissions/${submission.id}`, {
+                                                                                    method: 'DELETE',
+                                                                                    headers: {
+                                                                                        Authorization: `Bearer ${token}`,
+                                                                                    },
+                                                                                });
+
+                                                                                if (response.ok) {
+                                                                                    alert('삭제되었습니다.');
+                                                                                    fetchSubmissions();
+                                                                                } else {
+                                                                                    const data = await response.json();
+                                                                                    alert(data.error || '삭제 실패');
+                                                                                }
+                                                                            } catch (error) {
+                                                                                console.error('Delete error:', error);
+                                                                                alert('삭제 중 오류가 발생했습니다.');
+                                                                            }
                                                                         }
-                                                                    } catch (error) {
-                                                                        console.error('Delete error:', error);
-                                                                        alert('삭제 중 오류가 발생했습니다.');
-                                                                    }
-                                                                }
-                                                            }}
-                                                            className="text-red-600 font-semibold hover:underline"
-                                                        >
-                                                            삭제
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                                    }}
+                                                                    className="text-red-600 hover:text-red-900 font-semibold"
+                                                                >
+                                                                    삭제
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ))}
 
-                            {/* Summary */}
-                            <div className="px-6 py-4 bg-gray-50 border-t-2 border-gray-200">
+                            {/* 전체 요약 */}
+                            <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+                                <h3 className="text-lg font-bold text-black mb-3">전체 요약</h3>
                                 <div className="flex gap-6 text-sm text-gray-600">
                                     <span>
                                         전체: <strong className="text-black">{submissions.length}</strong>건
