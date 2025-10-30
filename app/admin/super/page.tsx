@@ -677,7 +677,7 @@ export default function SuperAdminPage() {
                             {portfolios.map((portfolio) => (
                                 <div key={portfolio.id} className="bg-white border-2 border-black rounded-lg overflow-hidden">
                                     {portfolio.thumbnail && (
-                                        <div className="w-full h-35 bg-gray-200">
+                                        <div className="w-full h-40 bg-gray-200">
                                             <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover" />
                                         </div>
                                     )}

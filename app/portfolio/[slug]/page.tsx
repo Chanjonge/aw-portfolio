@@ -40,7 +40,10 @@ export default function PortfolioForm() {
     const [currentStep, setCurrentStep] = useState(-1); // -1 = 로딩, 0+ = 질문 단계
     const [formData, setFormData] = useState<FormData>({});
     const [errors, setErrors] = useState<FormData>({});
-    const [rooms, setRooms] = useState<{ id: number; name: string; desc: string; type: string }[]>([]);
+
+    // ✅ 객실: 처음에 1개 기본 제공
+    const [rooms, setRooms] = useState<Array<{ id: string; name: string; desc: string; type: string }>>([{ id: 'room-1', name: '', desc: '', type: '' }]);
+
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [userRole, setUserRole] = useState<string>('');
@@ -136,7 +139,22 @@ export default function PortfolioForm() {
                     // 기존 제출 내역이 있으면 불러오기
                     setExistingSubmissionId(data.submission.id);
                     setFormData(data.submission.responses);
-                    setRooms(data.submission.responses?.rooms || []); // ✅ 추가
+
+                    // ✅ 저장된 rooms가 있으면 불러오고, 없으면 1개 기본
+                    const savedRooms = data.submission.responses?.rooms;
+                    if (Array.isArray(savedRooms) && savedRooms.length > 0) {
+                        setRooms(
+                            savedRooms.map((r: any, idx: number) => ({
+                                id: r.id ? String(r.id) : `room-${idx + 1}`,
+                                name: r.name || '',
+                                desc: r.desc || '',
+                                type: r.type || '',
+                            }))
+                        );
+                    } else {
+                        setRooms([{ id: 'room-1', name: '', desc: '', type: '' }]);
+                    }
+
                     alert('기존 작성 내역을 불러왔습니다.');
                 }
             }
@@ -377,11 +395,24 @@ export default function PortfolioForm() {
         return isValid;
     };
 
+    // ✅ 객실 추가
     const handleAddRoom = () => {
-        const newId = rooms.length + 2; // ✅ 2부터 시작
-        const newRoom = { id: newId, name: '', desc: '', type: '' };
-        setRooms((prev) => [...prev, newRoom]);
+        setRooms((prev) => [
+            ...prev,
+            {
+                id: `room-${Date.now()}`,
+                name: '',
+                desc: '',
+                type: '',
+            },
+        ]);
     };
+
+    // ✅ 객실 삭제
+    const handleRemoveRoom = (id: string) => {
+        setRooms((prev) => prev.filter((room) => room.id !== id));
+    };
+
     const handleNext = async () => {
         // 질문 단계 검증 후 다음 단계로
         if (validateStep()) {
@@ -456,7 +487,11 @@ export default function PortfolioForm() {
                     portfolioId: portfolio.id,
                     companyName,
                     password,
-                    responses: formData,
+                    // ✅ 최종 제출에도 rooms 포함
+                    responses: {
+                        ...formData,
+                        rooms,
+                    },
                     isDraft: false,
                 }),
             });
@@ -598,50 +633,68 @@ export default function PortfolioForm() {
                             {/* ✅ 객실 입력 영역 (5단계 전용) */}
                             {currentStep === 5 && (
                                 <div className="mt-6 space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-semibold text-black">객실 정보 입력</h3>
+                                        <button type="button" onClick={handleAddRoom} className="px-4 py-2 bg-gray-100 border-2 border-black rounded-lg text-sm font-semibold hover:bg-black hover:text-white transition-all">
+                                            + 객실 추가
+                                        </button>
+                                    </div>
+
+                                    {rooms.length === 0 && <p className="text-gray-500 text-sm">아직 등록된 객실이 없습니다. “객실 추가”를 눌러주세요.</p>}
+
                                     {rooms.map((room, index) => (
-                                        <div key={room.id} className="p-4 border rounded-lg space-y-4">
+                                        <div key={room.id} className="p-4 border rounded-lg space-y-4 relative bg-gray-50">
+                                            {/* 삭제 버튼 (객실이 1개일 땐 숨김) */}
+                                            {rooms.length > 1 && (
+                                                <button type="button" onClick={() => handleRemoveRoom(room.id)} className="absolute top-3 right-3 text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+                                                    삭제
+                                                </button>
+                                            )}
+
+                                            <div className="flex items-center gap-2">
+                                                <span className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-black text-white text-xs">{index + 1}</span>
+                                                <p className="text-sm text-gray-700">객실 {index + 1}</p>
+                                            </div>
+
                                             <div>
-                                                <label className="block font-semibold mb-1">객실명 {index + 1}</label>
+                                                <label className="block font-semibold mb-1">객실명</label>
                                                 <input
                                                     type="text"
                                                     value={room.name}
                                                     onChange={(e) => {
-                                                        const updated = [...rooms];
-                                                        updated[index].name = e.target.value;
+                                                        const updated = rooms.map((r) => (r.id === room.id ? { ...r, name: e.target.value } : r));
                                                         setRooms(updated);
                                                     }}
                                                     className="w-full border border-gray-300 rounded-lg p-2"
-                                                    placeholder={`객실${index + 1} 이름을 입력해주세요.`}
+                                                    placeholder="예: Signature Spa Room"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block font-semibold mb-1">객실 설명 {index + 1}</label>
+                                                <label className="block font-semibold mb-1">객실 설명</label>
                                                 <textarea
                                                     value={room.desc}
                                                     onChange={(e) => {
-                                                        const updated = [...rooms];
-                                                        updated[index].desc = e.target.value;
+                                                        const updated = rooms.map((r) => (r.id === room.id ? { ...r, desc: e.target.value } : r));
                                                         setRooms(updated);
                                                     }}
                                                     className="w-full border border-gray-300 rounded-lg p-2"
                                                     rows={3}
-                                                    placeholder={`객실${index + 1} 설명을 입력해주세요.`}
+                                                    placeholder="객실 특징, 뷰, 서비스 등을 적어주세요."
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block font-semibold mb-1">형태 {index + 1}</label>
+                                                <label className="block font-semibold mb-1">형태</label>
                                                 <input
                                                     type="text"
                                                     value={room.type}
                                                     onChange={(e) => {
-                                                        const updated = [...rooms];
-                                                        updated[index].type = e.target.value;
+                                                        const updated = rooms.map((r) => (r.id === room.id ? { ...r, type: e.target.value } : r));
                                                         setRooms(updated);
                                                     }}
                                                     className="w-full border border-gray-300 rounded-lg p-2"
-                                                    placeholder={`예: 침실1 + 거실1 + 화장실1`}
+                                                    placeholder="예: 침실1 + 거실1 + 화장실1"
                                                 />
                                             </div>
                                         </div>
@@ -664,7 +717,7 @@ export default function PortfolioForm() {
                                 이전
                             </button>
 
-                            {/* ✅ 5단계일 때만 객실 추가 버튼 */}
+                            {/* ✅ 5단계일 때만 객실 추가 버튼 (여기도 하나 더) */}
                             {currentStep === 5 && (
                                 <button onClick={handleAddRoom} className="px-6 py-3 bg-gray-100 border-2 border-black rounded-lg font-semibold hover:bg-black hover:text-white transition-all">
                                     객실 추가
