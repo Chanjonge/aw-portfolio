@@ -29,9 +29,7 @@ export async function GET(request: NextRequest) {
             where: {
                 portfolioId: portfolioId,
                 isDraft: false, // 완료된 제출만
-                NOT: {
-                    OR: [{ companyName: null }, { companyName: '' }],
-                },
+                AND: [{ companyName: { not: null } }, { companyName: { not: '' } }],
             },
             include: {
                 portfolio: {
