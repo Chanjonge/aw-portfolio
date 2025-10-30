@@ -52,6 +52,7 @@ export default function Home() {
     const [previewTitle, setPreviewTitle] = useState<string>('');
     const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop'); // ⬅ 추가
     const [proxyError, setProxyError] = useState<string>(''); // 프록시 오류 상태
+    const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false); // 미리보기 로딩 상태
 
     // ESC 키로 팝업 닫기 + 스크롤 잠금/복원
     useEffect(() => {
@@ -214,6 +215,7 @@ export default function Home() {
     // 미리보기 열기 함수
     const handlePreviewOpen = async (domain: string, title: string) => {
         setProxyError('');
+        setIsPreviewLoading(true);
         const proxyUrl = getProxyUrl(domain);
         setPreviewUrl(proxyUrl);
         setPreviewTitle(title);
@@ -231,10 +233,18 @@ export default function Home() {
                         .then((r) => r.json())
                         .catch(() => ({}));
                     setProxyError(errorData.error || '웹사이트에 연결할 수 없습니다.');
+                    setIsPreviewLoading(false);
+                } else {
+                    // 성공적으로 로드되면 잠시 후 로딩 상태 해제
+                    setTimeout(() => setIsPreviewLoading(false), 2000);
                 }
+            } else {
+                // HTTPS 사이트는 바로 로딩 상태 해제
+                setTimeout(() => setIsPreviewLoading(false), 1000);
             }
         } catch (error) {
             console.error('Preview check error:', error);
+            setIsPreviewLoading(false);
         }
     };
 
@@ -435,7 +445,6 @@ export default function Home() {
             </div>
 
             {/* 미리보기 팝업 모달 */}
-            {/* 미리보기 팝업 모달 */}
             {showPreview && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowPreview(false)}>
                     <div className="bg-white rounded-lg shadow-2xl w-full max-w-8xl h-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${previewTitle} 미리보기`}>
@@ -472,7 +481,17 @@ export default function Home() {
 
                         {/* iframe 컨텐츠 */}
                         <div className="flex-1 bg-white rounded-b-lg overflow-auto flex items-start justify-center">
-                            {proxyError ? (
+                            {isPreviewLoading ? (
+                                <div className="mt-8 p-6 text-center">
+                                    <div className="inline-flex items-center gap-3 px-6 py-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                        <div>
+                                            <p className="text-blue-800 font-medium">사이트를 불러오는 중입니다...</p>
+                                            <p className="text-blue-600 text-sm mt-1">스타일과 리소스를 프록시를 통해 로드하고 있습니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : proxyError ? (
                                 <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg max-w-lg mx-auto">
                                     <div className="flex items-start gap-3">
                                         <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
@@ -555,10 +574,12 @@ export default function Home() {
                                                 // iframe 로드 성공 확인
                                                 if (iframe.contentWindow) {
                                                     setProxyError('');
+                                                    setIsPreviewLoading(false);
                                                 }
                                             } catch (error) {
                                                 // Cross-origin 오류는 정상적인 경우
                                                 setProxyError('');
+                                                setIsPreviewLoading(false);
                                             }
                                         }}
                                     />

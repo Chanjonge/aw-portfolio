@@ -87,20 +87,119 @@ export async function GET(request: NextRequest) {
         const contentType = response.headers.get('content-type') || 'text/html';
         let content = await response.text();
 
-        // HTML인 경우 상대 경로를 절대 경로로 변환
+        // HTML인 경우 모든 리소스를 프록시를 통해 로드하도록 변환
         if (contentType.includes('text/html')) {
             const baseUrl = `${url.protocol}//${url.host}`;
+            const proxyBaseUrl = `/api/proxy?url=`;
 
-            // CSS, JS, 이미지 등의 상대 경로를 절대 경로로 변환
+            // 1. 절대 경로 (/)로 시작하는 리소스들을 프록시로 변환
             content = content
-                .replace(/href="\/([^"]*?)"/g, `href="${baseUrl}/$1"`)
-                .replace(/src="\/([^"]*?)"/g, `src="${baseUrl}/$1"`)
-                .replace(/url\(\/([^)]*?)\)/g, `url(${baseUrl}/$1)`)
-                .replace(/url\("\/([^"]*?)"\)/g, `url("${baseUrl}/$1")`)
-                .replace(/url\('\/([^']*?)'\)/g, `url('${baseUrl}/$1')`);
+                .replace(/href="\/([^"]*?)"/g, (match, path) => {
+                    const fullUrl = `${baseUrl}/${path}`;
+                    return `href="${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                })
+                .replace(/src="\/([^"]*?)"/g, (match, path) => {
+                    const fullUrl = `${baseUrl}/${path}`;
+                    return `src="${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                })
+                .replace(/url\(\/([^)]*?)\)/g, (match, path) => {
+                    const fullUrl = `${baseUrl}/${path}`;
+                    return `url(${proxyBaseUrl}${encodeURIComponent(fullUrl)})`;
+                })
+                .replace(/url\("\/([^"]*?)"\)/g, (match, path) => {
+                    const fullUrl = `${baseUrl}/${path}`;
+                    return `url("${proxyBaseUrl}${encodeURIComponent(fullUrl)}")`;
+                })
+                .replace(/url\('\/([^']*?)'\)/g, (match, path) => {
+                    const fullUrl = `${baseUrl}/${path}`;
+                    return `url('${proxyBaseUrl}${encodeURIComponent(fullUrl)}')`;
+                });
 
-            // 상대 경로 링크도 처리
-            content = content.replace(/href="(?!http|\/\/|#)([^"]*?)"/g, `href="${baseUrl}/$1"`).replace(/src="(?!http|\/\/|data:)([^"]*?)"/g, `src="${baseUrl}/$1"`);
+            // 2. 상대 경로 리소스들도 프록시로 변환
+            content = content
+                .replace(/href="(?!http|\/\/|#|mailto:|tel:|javascript:)([^"]*?)"/g, (match, path) => {
+                    const fullUrl = new URL(path, targetUrl).href;
+                    return `href="${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                })
+                .replace(/src="(?!http|\/\/|data:|javascript:)([^"]*?)"/g, (match, path) => {
+                    const fullUrl = new URL(path, targetUrl).href;
+                    return `src="${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                });
+
+            // 3. HTTP/HTTPS 절대 URL도 프록시로 변환 (같은 도메인이 아닌 경우만)
+            content = content
+                .replace(/href="(https?:\/\/[^"]*?)"/g, (match, fullUrl) => {
+                    try {
+                        const resourceUrl = new URL(fullUrl);
+                        // 같은 도메인이거나 HTTPS인 경우는 그대로, HTTP 외부 도메인은 프록시 사용
+                        if (resourceUrl.host === url.host || resourceUrl.protocol === 'https:') {
+                            return match;
+                        }
+                        return `href="${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                    } catch {
+                        return match;
+                    }
+                })
+                .replace(/src="(https?:\/\/[^"]*?)"/g, (match, fullUrl) => {
+                    try {
+                        const resourceUrl = new URL(fullUrl);
+                        // 같은 도메인이거나 HTTPS인 경우는 그대로, HTTP 외부 도메인은 프록시 사용
+                        if (resourceUrl.host === url.host || resourceUrl.protocol === 'https:') {
+                            return match;
+                        }
+                        return `src="${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                    } catch {
+                        return match;
+                    }
+                });
+
+            // 4. CSS 내부의 @import와 url() 처리
+            content = content.replace(/@import\s+url\(["']?([^"')]*?)["']?\)/g, (match, path) => {
+                try {
+                    const fullUrl = new URL(path, targetUrl).href;
+                    return `@import url("${proxyBaseUrl}${encodeURIComponent(fullUrl)}")`;
+                } catch {
+                    return match;
+                }
+            });
+
+            // 5. Base tag 추가로 상대 경로 기준점 설정
+            if (!content.includes('<base')) {
+                content = content.replace(/<head>/i, `<head>\n<base href="${targetUrl}">`);
+            }
+        }
+
+        // CSS 파일인 경우 내부 리소스 경로 처리
+        if (contentType.includes('text/css')) {
+            const baseUrl = `${url.protocol}//${url.host}`;
+            const proxyBaseUrl = `/api/proxy?url=`;
+
+            // CSS 내의 url() 함수들을 프록시로 변환
+            content = content
+                .replace(/url\(["']?\/([^"')]*?)["']?\)/g, (match, path) => {
+                    const fullUrl = `${baseUrl}/${path}`;
+                    return `url("${proxyBaseUrl}${encodeURIComponent(fullUrl)}")`;
+                })
+                .replace(/url\(["']?(?!http|\/\/|data:)([^"')]*?)["']?\)/g, (match, path) => {
+                    try {
+                        const fullUrl = new URL(path, targetUrl).href;
+                        return `url("${proxyBaseUrl}${encodeURIComponent(fullUrl)}")`;
+                    } catch {
+                        return match;
+                    }
+                })
+                .replace(/@import\s+["']?\/([^"']*)["']?/g, (match, path) => {
+                    const fullUrl = `${baseUrl}/${path}`;
+                    return `@import "${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                })
+                .replace(/@import\s+["']?(?!http|\/\/)([^"']*)["']?/g, (match, path) => {
+                    try {
+                        const fullUrl = new URL(path, targetUrl).href;
+                        return `@import "${proxyBaseUrl}${encodeURIComponent(fullUrl)}"`;
+                    } catch {
+                        return match;
+                    }
+                });
         }
 
         // 응답 헤더 설정
@@ -113,6 +212,20 @@ export async function GET(request: NextRequest) {
         headers.set('Access-Control-Allow-Origin', '*');
         headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+        // 캐싱 헤더 (리소스 로딩 성능 향상)
+        if (!contentType.includes('text/html')) {
+            headers.set('Cache-Control', 'public, max-age=3600'); // 1시간 캐시
+        }
+
+        // 원본 서버의 일부 헤더 복사
+        const originalHeaders = ['last-modified', 'etag', 'expires'];
+        originalHeaders.forEach((headerName) => {
+            const value = response.headers.get(headerName);
+            if (value) {
+                headers.set(headerName, value);
+            }
+        });
 
         return new NextResponse(content, {
             status: 200,
