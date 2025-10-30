@@ -166,6 +166,7 @@ export default function PortfolioForm() {
 
     const currentQuestions = questions.filter((q) => q.step === currentStep);
 
+    // 현재 단계의 질문들만 검증 (단계 이동 시 사용)
     const validateStep = (): boolean => {
         const newErrors: FormData = {};
         let isValid = true;
@@ -256,6 +257,105 @@ export default function PortfolioForm() {
         return isValid;
     };
 
+    // 모든 단계의 필수 질문들을 검증 (최종 제출 시 사용)
+    const validateAllSteps = (): boolean => {
+        const newErrors: FormData = {};
+        let isValid = true;
+        const missingSteps: number[] = [];
+
+        questions.forEach((question) => {
+            const value = formData[question.id];
+
+            // 필수 항목 체크
+            if (question.isRequired) {
+                let hasError = false;
+
+                // 파일 업로드는 URL이 있는지 확인
+                if (question.questionType === 'file') {
+                    if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+                        newErrors[question.id] = '파일을 업로드해주세요.';
+                        hasError = true;
+                    }
+                }
+                // 체크박스는 다중/단일 선택에 따라 확인
+                else if (question.questionType === 'checkbox') {
+                    if (!value || typeof value !== 'object') {
+                        newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                        hasError = true;
+                    } else {
+                        try {
+                            const options = JSON.parse(question.options || '{}');
+                            const isMultiple = options.multiple !== false;
+
+                            if (isMultiple) {
+                                if (!('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
+                                    newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                                    hasError = true;
+                                }
+                            } else {
+                                if (!('selected' in value) || !(value as any).selected) {
+                                    newErrors[question.id] = '하나를 선택해주세요.';
+                                    hasError = true;
+                                }
+                            }
+                        } catch {
+                            if (!('checked' in value) || !(value as any).checked || (value as any).checked.length === 0) {
+                                newErrors[question.id] = '최소 하나 이상 선택해주세요.';
+                                hasError = true;
+                            }
+                        }
+                    }
+                }
+                // 반복 필드는 배열에 데이터가 있는지 확인
+                else if (question.questionType === 'repeatable') {
+                    if (!value || !Array.isArray(value) || value.length === 0) {
+                        newErrors[question.id] = '최소 하나 이상 입력해주세요.';
+                        hasError = true;
+                    }
+                }
+                // 동의 체크박스는 agreed 값 확인
+                else if (question.questionType === 'agreement') {
+                    if (!value || !value.agreed) {
+                        newErrors[question.id] = '안내사항에 동의해주세요.';
+                        hasError = true;
+                    }
+                }
+                // 텍스트 필드는 문자열 길이 확인
+                else {
+                    if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+                        newErrors[question.id] = '이 항목은 필수입니다.';
+                        hasError = true;
+                    }
+                }
+
+                // 오류가 있는 질문의 단계를 기록
+                if (hasError && !missingSteps.includes(question.step)) {
+                    missingSteps.push(question.step);
+                    isValid = false;
+                }
+            }
+
+            // 최소 글자 수 체크
+            if (question.requireMinLength && (question.questionType === 'text' || question.questionType === 'textarea') && typeof value === 'string' && value.trim().length > 0 && value.trim().length < question.minLength) {
+                newErrors[question.id] = `최소 ${question.minLength}자 이상 입력해주세요.`;
+                if (!missingSteps.includes(question.step)) {
+                    missingSteps.push(question.step);
+                }
+                isValid = false;
+            }
+        });
+
+        setErrors(newErrors);
+
+        // 누락된 단계가 있으면 사용자에게 알림
+        if (!isValid && missingSteps.length > 0) {
+            const sortedSteps = missingSteps.sort((a, b) => a - b);
+            alert(`${sortedSteps.join(', ')}단계에 미완성된 필수 항목이 있습니다.\n해당 단계로 이동하여 모든 필수 항목을 완성해주세요.`);
+        }
+
+        return isValid;
+    };
+
     const handleNext = async () => {
         // 질문 단계 검증 후 다음 단계로
         if (validateStep()) {
@@ -312,7 +412,7 @@ export default function PortfolioForm() {
     };
 
     const handleSubmit = async () => {
-        if (!validateStep() || !portfolio) return;
+        if (!validateAllSteps() || !portfolio) return;
 
         setSubmitting(true);
         try {
