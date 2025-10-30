@@ -64,20 +64,38 @@ export async function GET(request: NextRequest) {
             return groups;
         }, {});
 
-        // ===== 메인 시트(제출목록) 만들기 =====
-        const columnHeaders = ['순번', '상호명'];
+        // 🔥 1) 먼저 모든 제출을 훑어서 "rooms 최대 개수" 파악
+        let maxRooms = 0;
+        submissions.forEach((submission) => {
+            const responses = JSON.parse(submission.responses || '{}');
+            const rooms = Array.isArray(responses.rooms) ? responses.rooms : [];
+            if (rooms.length > maxRooms) {
+                maxRooms = rooms.length;
+            }
+        });
 
+        // ===== 메인 시트(제출목록) 만들기 =====
+        const columnHeaders: string[] = ['순번', '상호명'];
+
+        // 기존 질문들 헤더
         Object.keys(questionsByStep)
             .sort((a, b) => parseInt(a) - parseInt(b))
             .forEach((step) => {
                 questionsByStep[parseInt(step)]
                     .sort((a, b) => a.order - b.order)
                     .forEach((question) => {
-                        // ✅ 이미지/파일 질문은 제외
-                        if (question.questionType === 'file') return;
+                        if (question.questionType === 'file') return; // 이미지/파일 컬럼 제외
                         columnHeaders.push(question.title);
                     });
             });
+
+        // 🔥 2) 객실 헤더 추가 (가변)
+        // maxRooms 가 0이면 안 붙음
+        for (let i = 1; i <= maxRooms; i++) {
+            columnHeaders.push(`객실${i}명`);
+            columnHeaders.push(`객실${i}설명`);
+            columnHeaders.push(`객실${i}형태`);
+        }
 
         const excelData: any[] = [];
 
@@ -88,6 +106,7 @@ export async function GET(request: NextRequest) {
             row['순번'] = index + 1;
             row['상호명'] = submission.companyName;
 
+            // 질문 응답 채우기
             Object.keys(questionsByStep)
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .forEach((step) => {
@@ -126,9 +145,19 @@ export async function GET(request: NextRequest) {
                         });
                 });
 
+            // 🔥 3) 객실 정보 채우기
+            const rooms = Array.isArray(responses.rooms) ? responses.rooms : [];
+            for (let i = 0; i < maxRooms; i++) {
+                const room = rooms[i] || {};
+                row[`객실${i + 1}명`] = room.name || '';
+                row[`객실${i + 1}설명`] = room.desc || '';
+                row[`객실${i + 1}형태`] = room.type || '';
+            }
+
             excelData.push(row);
         });
 
+        // 워크북/시트 생성
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(excelData, {
             header: columnHeaders,
@@ -137,57 +166,16 @@ export async function GET(request: NextRequest) {
         // 컬럼 너비
         const colWidths: any[] = [];
         columnHeaders.forEach((header, index) => {
-            if (header.includes('===') && header.includes('단계')) {
-                colWidths[index] = { wch: 15 };
-            } else {
-                const maxLength = Math.max(header.length, ...excelData.map((row) => String(row[header] || '').length));
-                colWidths[index] = { wch: Math.min(maxLength + 2, 50) };
-            }
+            const maxLength = Math.max(header.length, ...excelData.map((row) => String(row[header] || '').length));
+            colWidths[index] = { wch: Math.min(maxLength + 2, 60) };
         });
         worksheet['!cols'] = colWidths;
 
-        // 메인 시트 추가
+        // 시트 추가
+        const portfolioTitle = submissions[0].portfolio?.title || '알 수 없음';
         XLSX.utils.book_append_sheet(workbook, worksheet, '제출목록');
 
-        // ===== 🔥 추가: 객실 시트 만들기 =====
-        // 프론트에서 responses.rooms 로 넣어준 걸 여기서 꺼내서 펼친다
-        const roomRows: any[] = [];
-
-        submissions.forEach((submission, index) => {
-            const responses = JSON.parse(submission.responses || '{}');
-            const rooms = Array.isArray(responses.rooms) ? responses.rooms : [];
-
-            rooms.forEach((room: any, roomIdx: number) => {
-                roomRows.push({
-                    순번: index + 1,
-                    상호명: submission.companyName,
-                    객실번호: roomIdx + 1,
-                    객실명: room.name || '',
-                    '객실 설명': room.desc || '',
-                    형태: room.type || '',
-                });
-            });
-        });
-
-        if (roomRows.length > 0) {
-            const roomSheet = XLSX.utils.json_to_sheet(roomRows, {
-                header: ['순번', '상호명', '객실번호', '객실명', '객실 설명', '형태'],
-            });
-
-            roomSheet['!cols'] = [
-                { wch: 6 }, // 순번
-                { wch: 20 }, // 상호명
-                { wch: 8 }, // 객실번호
-                { wch: 25 }, // 객실명
-                { wch: 40 }, // 객실 설명
-                { wch: 25 }, // 형태
-            ];
-
-            XLSX.utils.book_append_sheet(workbook, roomSheet, '객실목록');
-        }
-
-        // ===== 최종 응답 =====
-        const portfolioTitle = submissions[0].portfolio?.title || '알 수 없음';
+        // 버퍼로 쓰기
         const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
         const fileName = `${portfolioTitle}_제출목록_${new Date().toISOString().split('T')[0]}.xlsx`;
