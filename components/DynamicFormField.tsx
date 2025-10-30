@@ -164,7 +164,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
-                    <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
+                    <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
                         <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
                     </div>
                 )}
@@ -193,7 +193,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
-                    <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
+                    <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
                         <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
                     </div>
                 )}
@@ -249,7 +249,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
         return (
             <div className="space-y-4 bg-white p-6 rounded-lg border-2 border-gray-200">
                 {question.thumbnail && (
-                    <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
+                    <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
                         <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
                     </div>
                 )}
@@ -340,7 +340,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
         return (
             <div className="space-y-3">
                 {question.thumbnail && (
-                    <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
+                    <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
                         <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
                     </div>
                 )}
@@ -484,7 +484,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     return (
         <div className="space-y-3">
             {question.thumbnail && (
-                <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
+                <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
                     <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
                 </div>
             )}
