@@ -95,18 +95,22 @@ export async function GET(request: NextRequest) {
         }
 
         if (extraRoomHeaders.length > 0) {
-            // '객실명' 헤더 위치 찾기
-            const baseRoomIndex = columnHeaders.findIndex((h) => h === '객실명');
+            // ✅ 기준 컬럼들 위치 찾기
+            const roomNameIdx = columnHeaders.findIndex((h) => h === '객실명');
+            const roomDescIdx = columnHeaders.findIndex((h) => h === '객실 설명');
+            const roomTypeIdx = columnHeaders.findIndex((h) => h === '형태');
 
-            if (baseRoomIndex !== -1) {
-                // 객실명 바로 뒤에 추가 객실 컬럼들 끼워넣기
-                columnHeaders.splice(baseRoomIndex + 1, 0, ...extraRoomHeaders);
+            // 우리가 기대하는 형태: 객실명 -> 객실 설명 -> 형태
+            const hasRoomBase = roomNameIdx !== -1 && roomDescIdx !== -1 && roomTypeIdx !== -1 && roomNameIdx < roomDescIdx && roomDescIdx < roomTypeIdx;
+
+            if (hasRoomBase) {
+                // ✅ '형태' 바로 다음 위치에 추가 객실들 끼워넣기
+                columnHeaders.splice(roomTypeIdx + 1, 0, ...extraRoomHeaders);
             } else {
-                // 질문에 '객실명'이 아예 없는 경우에는 그냥 뒤에 붙임
+                // 만약 위 3개가 연속이 아니면 그냥 뒤에 붙임
                 columnHeaders.push(...extraRoomHeaders);
             }
         }
-
         // 7. 행 데이터 만들기
         const excelData: any[] = [];
 
