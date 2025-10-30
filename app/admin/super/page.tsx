@@ -215,33 +215,6 @@ export default function SuperAdminPage() {
 
     const fetchSubmissions = async () => {
         try {
-            // 1. 구글 시트에서 데이터 가져오기 시도
-            try {
-                const sheetsResponse = await fetch('/api/sheets');
-                if (sheetsResponse.ok) {
-                    const sheetsData = await sheetsResponse.json();
-                    if (sheetsData.submissions && sheetsData.submissions.length > 0) {
-                        // 구글 시트 데이터를 기존 형식에 맞게 변환
-                        const formattedSubmissions = sheetsData.submissions.map((sub: any) => ({
-                            id: sub.id,
-                            companyName: sub.companyName,
-                            completedAt: sub.submittedAt,
-                            ipAddress: sub.ipAddress,
-                            responses: sub.responses,
-                            portfolio: {
-                                title: sub.portfolioTitle,
-                                slug: '',
-                            },
-                        }));
-                        setSubmissions(formattedSubmissions);
-                        return;
-                    }
-                }
-            } catch (sheetsError) {
-                console.error('구글 시트 조회 실패:', sheetsError);
-            }
-
-            // 2. 구글 시트 실패 시 기존 데이터베이스에서 가져오기
             const token = localStorage.getItem('token');
             const response = await fetch('/api/submissions', {
                 headers: {
@@ -251,6 +224,9 @@ export default function SuperAdminPage() {
             const data = await response.json();
             if (response.ok) {
                 setSubmissions(data.submissions || []);
+                console.log('제출목록 로드:', data.submissions?.length || 0, '건');
+            } else {
+                console.error('제출목록 조회 실패:', data.error);
             }
         } catch (error) {
             console.error('Failed to fetch submissions:', error);

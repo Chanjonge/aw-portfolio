@@ -316,55 +316,33 @@ export default function PortfolioForm() {
 
         setSubmitting(true);
         try {
-            // 1. 구글 폼으로 데이터 전송 (백업용)
-            try {
-                const formData_backup = new FormData();
-                formData_backup.append('entry.1234567890', portfolio.title); // 포트폴리오 제목
-                formData_backup.append('entry.0987654321', companyName); // 상호명
-                formData_backup.append('entry.1122334455', JSON.stringify(formData)); // 응답 데이터
-                formData_backup.append('entry.5566778899', new Date().toLocaleString('ko-KR')); // 제출 시간
+            // 데이터베이스에 저장
+            const method = existingSubmissionId ? 'PUT' : 'POST';
+            const url = existingSubmissionId ? `/api/submissions/${existingSubmissionId}` : '/api/submissions';
 
-                // 구글 폼 제출 (실패해도 계속 진행)
-                fetch('https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse', {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: formData_backup,
-                }).catch(() => console.log('구글 폼 백업 실패'));
-            } catch (error) {
-                console.error('구글 폼 백업 오류:', error);
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    portfolioId: portfolio.id,
+                    companyName,
+                    password,
+                    responses: formData,
+                    isDraft: false,
+                }),
+            });
+
+            if (response.ok) {
+                alert('제출이 완료되었습니다!\n데이터가 안전하게 저장되었습니다.');
+                router.push('/thank-you');
+            } else {
+                const errorData = await response.json();
+                console.error('제출 실패:', errorData);
+                alert(errorData.error || '제출 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
             }
-
-            // 2. 기존 데이터베이스에도 저장 (백업용)
-            try {
-                const method = existingSubmissionId ? 'PUT' : 'POST';
-                const url = existingSubmissionId ? `/api/submissions/${existingSubmissionId}` : '/api/submissions';
-
-                const dbResponse = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        portfolioId: portfolio.id,
-                        companyName,
-                        password,
-                        responses: formData,
-                        isDraft: false,
-                    }),
-                });
-
-                // 데이터베이스 저장 실패해도 구글 시트에는 저장되었으므로 성공으로 처리
-                if (!dbResponse.ok) {
-                    console.error('데이터베이스 저장 실패 (구글 시트에는 저장됨)');
-                }
-            } catch (dbError) {
-                console.error('데이터베이스 저장 오류:', dbError);
-                // 데이터베이스 오류는 무시하고 계속 진행
-            }
-
-            alert('제출이 완료되었습니다!\n데이터가 안전하게 저장되었습니다.');
-            router.push('/thank-you');
         } catch (error) {
             console.error('Submit error:', error);
-            alert('제출 중 오류가 발생했습니다.');
+            alert('제출 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
         } finally {
             setSubmitting(false);
         }
