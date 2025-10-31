@@ -127,3 +127,11 @@ input[type='text']:disabled {
 .h-35 {
     height: 35rem;
 }
+
+.object-cover {
+    object-fit: cover;
+}
+
+.object-contain {
+    object-fit: contain;
+}

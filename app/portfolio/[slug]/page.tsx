@@ -196,8 +196,6 @@ export default function PortfolioForm() {
         const newErrors: FormData = {};
         let isValid = true;
 
-        if (currentStep === 0) return true;
-
         currentQuestions.forEach((question) => {
             const value = formData[question.id];
             if (question.isRequired) {

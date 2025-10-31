@@ -254,9 +254,11 @@ export default function Home() {
             <header className="bg-white border-b-2 border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-2xl font-bold text-black">
-                            <img src="/logo.png" alt="로고" className="h-8" />
-                        </h1>
+                        <a href="/" className="block">
+                            <h1 className="text-2xl font-bold text-black">
+                                <img src="/logo.png" alt="로고" className="h-8" />
+                            </h1>
+                        </a>
                         <div className="flex items-center gap-4">
                             {/* 상호명 표시 (비관리자 인증시) */}
                             {isAuthenticated && companyName && !user && (
@@ -298,7 +300,13 @@ export default function Home() {
 
                 {/* 사용자 인증 섹션 */}
                 {!isAuthenticated && !user && (
-                    <div className="max-w-md mx-auto mb-12 bg-white border-2 border-black rounded-lg p-8 shadow-lg">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault(); // 새로고침 방지
+                            handleAuth(); // 확인 버튼과 동일한 동작
+                        }}
+                        className="max-w-md mx-auto mb-12 bg-white border-2 border-black rounded-lg p-8 shadow-lg"
+                    >
                         <div className="text-center mb-6">
                             <h3 className="text-2xl font-bold text-black mb-2">제출자 정보 입력</h3>
                             <p className="text-gray-600">상호명과 4자리 비밀번호를 입력하세요</p>
@@ -309,7 +317,7 @@ export default function Home() {
                                 <label className="block text-sm font-bold text-gray-700 mb-2">
                                     상호명 <span className="text-red-500">*</span>
                                 </label>
-                                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="상호명을 입력해주세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+                                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="상호명을 입력해주세요" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all" required />
                             </div>
 
                             <div>
@@ -323,6 +331,7 @@ export default function Home() {
                                     placeholder="숫자 4자리"
                                     maxLength={4}
                                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                                    required
                                 />
                                 <p className="text-sm text-gray-500 mt-1">숫자 4자리만 입력 가능합니다</p>
                             </div>
@@ -333,11 +342,11 @@ export default function Home() {
                                 </div>
                             )}
 
-                            <button onClick={handleAuth} className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                            <button type="submit" className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition-all">
                                 확인
                             </button>
                         </div>
-                    </div>
+                    </form>
                 )}
 
                 {/* Category Filter */}

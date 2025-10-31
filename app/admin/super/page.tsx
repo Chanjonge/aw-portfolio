@@ -677,8 +677,8 @@ export default function SuperAdminPage() {
                             {portfolios.map((portfolio) => (
                                 <div key={portfolio.id} className="bg-white border-2 border-black rounded-lg overflow-hidden">
                                     {portfolio.thumbnail && (
-                                        <div className="w-full h-40 bg-gray-200">
-                                            <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full object-cover" />
+                                        <div className="w-full bg-gray-200">
+                                            <img src={portfolio.thumbnail} alt={portfolio.title} className="w-full h-full" />
                                         </div>
                                     )}
                                     <div className="p-6">
@@ -947,7 +947,7 @@ export default function SuperAdminPage() {
                                 />
                                 {portfolioForm.thumbnail && (
                                     <div className="mt-2 w-full h-32 bg-gray-200 rounded-lg overflow-hidden relative">
-                                        <img src={portfolioForm.thumbnail} alt="미리보기" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                        <img src={portfolioForm.thumbnail} alt="미리보기" className="w-full h-full" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                         <button type="button" onClick={() => setPortfolioForm({ ...portfolioForm, thumbnail: '' })} className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">
                                             삭제
                                         </button>
@@ -1311,7 +1311,7 @@ export default function SuperAdminPage() {
                                 />
                                 {questionForm.thumbnail && (
                                     <div className="mt-2 w-full h-32 bg-gray-200 rounded-lg overflow-hidden relative">
-                                        <img src={questionForm.thumbnail} alt="미리보기" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                        <img src={questionForm.thumbnail} alt="미리보기" className="w-full h-full" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                         <button type="button" onClick={() => setQuestionForm({ ...questionForm, thumbnail: '' })} className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">
                                             삭제
                                         </button>

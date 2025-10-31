@@ -105,31 +105,6 @@ export default function DynamicFormField({ question, value, onChange, error }: D
         }
     };
 
-    // =========================
-    // 안내 전용 notice (입력 없음)
-    // =========================
-    if (questionType === 'notice') {
-        const hasThumbnail = !!question.thumbnail?.trim();
-        const hasDescription = !!question.description?.trim();
-
-        return (
-            <section aria-label={question.title} className="space-y-4 py-6">
-                {hasThumbnail && (
-                    <div className="w-full h-48 bg-gray-100 rounded-xl overflow-hidden">
-                        <img src={question.thumbnail!} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                )}
-
-                <div>
-                    <h2 className="text-xl font-semibold text-black">{question.title}</h2>
-                    {hasDescription && <p className="mt-2 text-gray-600 leading-relaxed whitespace-pre-line">{question.description}</p>}
-                </div>
-
-                <hr className="border-gray-200 mt-6" />
-            </section>
-        );
-    }
-
     // 텍스트 입력
     if (questionType === 'text') {
         return (
@@ -163,11 +138,6 @@ export default function DynamicFormField({ question, value, onChange, error }: D
     if (questionType === 'textarea') {
         return (
             <div className="space-y-3">
-                {question.thumbnail && (
-                    <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
-                        <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                )}
                 <label className="block">
                     <span className="text-lg font-semibold text-black">
                         {question.title}
@@ -175,12 +145,17 @@ export default function DynamicFormField({ question, value, onChange, error }: D
                     </span>
                     {question.description && <span className="block text-sm text-gray-600 mt-1">{question.description}</span>}
                 </label>
+                {question.thumbnail && (
+                    <div className="w-full bg-gray-200 overflow-hidden">
+                        <img src={question.thumbnail} alt={question.title} className="w-full h-full object-contain" loading="lazy" />
+                    </div>
+                )}
                 <textarea
                     value={value ?? ''}
                     onChange={(e) => onChange(e.target.value)}
                     rows={6}
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-all ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
-                    placeholder="여기에 답변을 입력하세요..."
+                    placeholder={question.title}
                     maxLength={question.maxLength}
                 />
                 {error && <p className="text-sm text-red-500">{error}</p>}
@@ -194,7 +169,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
             <div className="space-y-3">
                 {question.thumbnail && (
                     <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
-                        <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
+                        <img src={question.thumbnail} alt={question.title} className="w-full h-full" loading="lazy" />
                     </div>
                 )}
                 <label className="block">
@@ -341,7 +316,7 @@ export default function DynamicFormField({ question, value, onChange, error }: D
             <div className="space-y-3">
                 {question.thumbnail && (
                     <div className="w-full h-35 bg-gray-200 rounded-lg overflow-hidden">
-                        <img src={question.thumbnail} alt={question.title} className="w-full h-full object-cover" loading="lazy" />
+                        <img src={question.thumbnail} alt={question.title} className="w-full h-full" loading="lazy" />
                     </div>
                 )}
                 <label className="block">
